@@ -27,35 +27,18 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: Request) {
   const cookie = request.headers.get('cookie');
   const headers = cookie ? { cookie } : undefined;
+  const { searchParams } = new URL(request.url);
+  const projectId = searchParams.get('projectId');
+  const tasksUrl = new URL(`${backendApiBaseUrl}/tasks`);
+
+  tasksUrl.searchParams.set('mine', 'false');
+  if (projectId) {
+    tasksUrl.searchParams.set('projectId', projectId);
+  }
 
   try {
-    const [metadataResponse, tasksResponse] = await Promise.all([
-      fetch(`${backendApiBaseUrl}/metadata`, { cache: 'no-store', headers }),
-      fetch(`${backendApiBaseUrl}/tasks?mine=false`, { cache: 'no-store', headers }),
-    ]);
-    const [metadataPayload, tasksPayload] = await Promise.all([
-      readJsonSafely<{ projects?: Array<{ id: string; name: string }> } & ErrorPayload>(
-        metadataResponse,
-      ),
-      readJsonSafely<unknown[] & ErrorPayload>(tasksResponse),
-    ]);
-
-    if (!metadataResponse.ok) {
-      return NextResponse.json(
-        {
-          message:
-            metadataPayload?.message ??
-            `Metadata request failed with ${metadataResponse.status}`,
-          details: metadataPayload?.details,
-        },
-        {
-          status:
-            metadataResponse.status === 401 || metadataResponse.status === 403
-              ? metadataResponse.status
-              : 502,
-        },
-      );
-    }
+    const tasksResponse = await fetch(tasksUrl, { cache: 'no-store', headers });
+    const tasksPayload = await readJsonSafely<unknown[] & ErrorPayload>(tasksResponse);
 
     if (!tasksResponse.ok) {
       return NextResponse.json(
@@ -74,7 +57,6 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.json({
-      projects: metadataPayload?.projects ?? [],
       tasks: Array.isArray(tasksPayload) ? tasksPayload : [],
     });
   } catch (error) {

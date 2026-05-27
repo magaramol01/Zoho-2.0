@@ -39,8 +39,13 @@ type TaskItem = {
 };
 
 type SpreadsheetPayload = {
-  projects: Project[];
   tasks: TaskItem[];
+  message?: string;
+  details?: string;
+};
+
+type ProjectsPayload = {
+  projects: Project[];
   message?: string;
   details?: string;
 };
@@ -212,10 +217,11 @@ const columnDefs: ColDef<GridRow>[] = [
 export default function Page() {
   const [bootstrap, setBootstrap] = useState<BootstrapPayload | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
-  const [tasks, setTasks] = useState<TaskItem[]>([]);
+  const [tasksByProjectId, setTasksByProjectId] = useState<Record<string, TaskItem[]>>({});
   const [activeProjectId, setActiveProjectId] = useState('');
   const [pinnedProjectIds, setPinnedProjectIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tasksLoading, setTasksLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [dataError, setDataError] = useState<string | null>(null);
 
@@ -266,17 +272,17 @@ export default function Page() {
 
         if (!bootstrapPayload.authenticated) {
           setProjects([]);
-          setTasks([]);
+          setTasksByProjectId({});
           setActiveProjectId('');
           return;
         }
 
         try {
-          const spreadsheetResponse = await fetch('/api/spreadsheet', { cache: 'no-store' });
-          const spreadsheetPayload = (await spreadsheetResponse.json()) as SpreadsheetPayload;
+          const projectsResponse = await fetch('/api/projects', { cache: 'no-store' });
+          const projectsPayload = (await projectsResponse.json()) as ProjectsPayload;
 
-          if (!spreadsheetResponse.ok) {
-            if (spreadsheetResponse.status === 401 || spreadsheetResponse.status === 403) {
+          if (!projectsResponse.ok) {
+            if (projectsResponse.status === 401 || projectsResponse.status === 403) {
               setBootstrap((current) =>
                 current
                   ? {
@@ -292,45 +298,35 @@ export default function Page() {
                     },
               );
               setProjects([]);
-              setTasks([]);
+              setTasksByProjectId({});
               setActiveProjectId('');
               return;
             }
 
-            throw new Error(
-              spreadsheetPayload.message ?? 'Failed to load the spreadsheet data.',
-            );
+            throw new Error(projectsPayload.message ?? 'Failed to load the project tabs.');
           }
 
           if (cancelled) {
             return;
           }
 
-          setProjects(spreadsheetPayload.projects ?? []);
-          setTasks(spreadsheetPayload.tasks ?? []);
-
-          const firstProjectId =
-            spreadsheetPayload.projects.find((project) =>
-              spreadsheetPayload.tasks.some((task) => task.projectId === project.id),
-            )?.id ??
-            spreadsheetPayload.projects[0]?.id ??
-            '';
-
+          setProjects(projectsPayload.projects ?? []);
+          setTasksByProjectId({});
           setActiveProjectId((current) =>
             current &&
-            spreadsheetPayload.projects.some((project) => project.id === current)
+            projectsPayload.projects.some((project) => project.id === current)
               ? current
-              : firstProjectId,
+              : projectsPayload.projects[0]?.id ?? '',
           );
-        } catch (spreadsheetError) {
+        } catch (projectsError) {
           if (cancelled) {
             return;
           }
 
           setDataError(
-            spreadsheetError instanceof Error
-              ? spreadsheetError.message
-              : 'Failed to load the spreadsheet data.',
+            projectsError instanceof Error
+              ? projectsError.message
+              : 'Failed to load the project tabs.',
           );
         }
       } catch (loadError) {
@@ -368,6 +364,88 @@ export default function Page() {
     );
   }, [pinnedProjectIds]);
 
+  useEffect(() => {
+    if (!bootstrap?.authenticated || !activeProjectId) {
+      setTasksLoading(false);
+      return;
+    }
+
+    setDataError(null);
+
+    if (activeProjectId in tasksByProjectId) {
+      setTasksLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadProjectTasks = async () => {
+      setTasksLoading(true);
+
+      try {
+        const params = new URLSearchParams({ projectId: activeProjectId });
+        const response = await fetch(`/api/spreadsheet?${params.toString()}`, {
+          cache: 'no-store',
+        });
+        const payload = (await response.json()) as SpreadsheetPayload;
+
+        if (!response.ok) {
+          if (response.status === 401 || response.status === 403) {
+            setBootstrap((current) =>
+              current
+                ? {
+                    ...current,
+                    authenticated: false,
+                    currentUser: null,
+                    authUrl: current.authUrl ?? LOCALHOST_LOGIN_URL,
+                  }
+                : {
+                    authenticated: false,
+                    currentUser: null,
+                    authUrl: LOCALHOST_LOGIN_URL,
+                  },
+            );
+            setProjects([]);
+            setTasksByProjectId({});
+            setActiveProjectId('');
+            return;
+          }
+
+          throw new Error(payload.message ?? 'Failed to load this project tab.');
+        }
+
+        if (cancelled) {
+          return;
+        }
+
+        setTasksByProjectId((current) => ({
+          ...current,
+          [activeProjectId]: payload.tasks ?? [],
+        }));
+      } catch (tasksError) {
+        if (cancelled) {
+          return;
+        }
+
+        setDataError(
+          tasksError instanceof Error
+            ? tasksError.message
+            : 'Failed to load this project tab.',
+        );
+      } finally {
+        if (!cancelled) {
+          setTasksLoading(false);
+        }
+      }
+    };
+
+    void loadProjectTasks();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeProjectId, bootstrap?.authenticated, tasksByProjectId]);
+
   const activeProject = useMemo(
     () => projects.find((project) => project.id === activeProjectId) ?? projects[0] ?? null,
     [activeProjectId, projects],
@@ -391,24 +469,24 @@ export default function Page() {
     return [...pinnedProjects, ...unpinnedProjects];
   }, [pinnedProjectIds, projects]);
 
+  const activeProjectTasks = activeProjectId ? tasksByProjectId[activeProjectId] ?? [] : [];
+
   const taskRows = useMemo<GridRow[]>(
     () =>
-      tasks
-        .filter((task) => !activeProject || task.projectId === activeProject.id)
-        .map((task) => ({
-          id: task.id,
-          itemNo: Number(task.itemNo),
-          name: task.name,
-          statusName: task.statusName,
-          priorityName: task.priorityName ?? '',
-          assigneeNames: task.assigneeNames.join(', '),
-          sprintName: task.sprintName ?? '',
-          dueDate:
-            task.dueDate && task.dueDate !== '-1' ? formatIsoDate(task.dueDate) : null,
-          remainingMinutes: task.remainingMinutes,
-          updatedAt: task.updatedAt,
-        })),
-    [activeProject, tasks],
+      activeProjectTasks.map((task) => ({
+        id: task.id,
+        itemNo: Number(task.itemNo),
+        name: task.name,
+        statusName: task.statusName,
+        priorityName: task.priorityName ?? '',
+        assigneeNames: task.assigneeNames.join(', '),
+        sprintName: task.sprintName ?? '',
+        dueDate:
+          task.dueDate && task.dueDate !== '-1' ? formatIsoDate(task.dueDate) : null,
+        remainingMinutes: task.remainingMinutes,
+        updatedAt: task.updatedAt,
+      })),
+    [activeProjectTasks],
   );
 
   const handleTogglePinnedProject = (projectId: string) => {
@@ -421,7 +499,7 @@ export default function Page() {
 
   const formulaText = activeProject
     ? `${activeProject.name} | ${taskRows.length} items`
-    : loading
+    : loading || tasksLoading
       ? 'Loading projects...'
       : 'No project selected';
 
@@ -515,8 +593,8 @@ export default function Page() {
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
                 <div className="text-sm font-medium text-white">After login</div>
                 <div className="mt-2 text-sm leading-6 text-slate-300">
-                  The page checks `/api/bootstrap` first. Only after that succeeds do we load
-                  project metadata and task data.
+                  The page checks `/api/bootstrap` first. Then it loads only the project tabs.
+                  Each project tab fetches its own tasks when you open it.
                 </div>
               </div>
             </div>
@@ -586,6 +664,17 @@ export default function Page() {
                     Unable to load real project data
                   </div>
                   <div className="mt-2 text-sm text-gray-500">{dataError}</div>
+                </div>
+              </div>
+            ) : tasksLoading && !(activeProject?.id && activeProject.id in tasksByProjectId) ? (
+              <div className="flex h-full items-center justify-center bg-white px-6 text-center">
+                <div>
+                  <div className="text-base font-medium text-gray-800">
+                    Loading {activeProject?.name ?? 'project'} tab
+                  </div>
+                  <div className="mt-2 text-sm text-gray-500">
+                    Fetching only this tab&apos;s tasks to keep the dashboard fast.
+                  </div>
                 </div>
               </div>
             ) : (

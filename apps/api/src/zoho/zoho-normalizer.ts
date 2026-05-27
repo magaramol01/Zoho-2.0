@@ -219,7 +219,9 @@ export class ZohoNormalizer {
         );
         const sprintId = asNullableString(values[Number(props.sprintId)]);
         const statusId = asString(values[Number(props.statusId)]);
+        const statusNameIndex = Number(props.statusName ?? props.itemStatusName);
         const priorityId = asNullableString(values[Number(props.projPriorityId)]);
+        const priorityNameIndex = Number(props.priorityName ?? props.projPriorityName);
         const dueDate = asNullableString(values[Number(props.endDate)]);
         const estimatedMinutes = parseDurationToMinutes(values[Number(props.duration)]) || null;
         const ownerIds = coerceList(values[Number(props.ownerId)]).map((entry) => asString(entry)).filter(Boolean);
@@ -240,9 +242,11 @@ export class ZohoNormalizer {
             sprintId,
             sprintName: null,
             statusId,
-            statusName: "",
+            statusName: Number.isFinite(statusNameIndex) ? asString(values[statusNameIndex]) : "",
             priorityId,
-            priorityName: null,
+            priorityName: Number.isFinite(priorityNameIndex)
+              ? asNullableString(values[priorityNameIndex])
+              : null,
             assigneeIds: ownerIds,
             assigneeNames: ownerIds.map((ownerId) => asString(userDisplayName[ownerId])).filter(Boolean),
             dueDate,

@@ -1,9 +1,11 @@
-import { Controller, Sse } from "@nestjs/common";
+import { Controller, Sse, UseGuards } from "@nestjs/common";
 import type { MessageEvent } from "@nestjs/common";
 import { interval, map, merge } from "rxjs";
+import { SessionAuthGuard } from "../auth/session-auth.guard";
 import { EventBusService } from "./event-bus.service";
 
 @Controller("events")
+@UseGuards(SessionAuthGuard)
 export class EventsController {
   constructor(private readonly eventBus: EventBusService) {}
 

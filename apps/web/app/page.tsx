@@ -5,13 +5,17 @@ import type { ColDef } from 'ag-grid-community';
 import BottomTabBar from '@/components/bottom-tab-bar';
 import GridSpace, { type GridRow } from '@/components/grid-space';
 import {
+  ArrowRight,
   FileSpreadsheet,
+  LockKeyhole,
   MessageSquare,
   MoreVertical,
   Share,
+  ShieldCheck,
 } from 'lucide-react';
 
 const PINNED_TABS_STORAGE_KEY = 'zoho-power-grid:pinned-project-tabs';
+const LOCALHOST_LOGIN_URL = 'http://localhost:3001/api/auth/login';
 
 type Project = {
   id: string;
@@ -37,6 +41,18 @@ type TaskItem = {
 type SpreadsheetPayload = {
   projects: Project[];
   tasks: TaskItem[];
+  message?: string;
+  details?: string;
+};
+
+type BootstrapPayload = {
+  authenticated: boolean;
+  authUrl: string | null;
+  currentUser: {
+    id: string;
+    email: string;
+    displayName: string;
+  } | null;
   message?: string;
   details?: string;
 };
@@ -85,6 +101,11 @@ function formatUpdatedAt(value: string) {
   return parsed.toISOString().slice(0, 10);
 }
 
+function getUserInitial(displayName: string | undefined, email: string | undefined) {
+  const source = displayName?.trim() || email?.trim() || 'Z';
+  return source.charAt(0).toUpperCase();
+}
+
 const dateFilterParams = {
   comparator: (filterLocalDateAtMidnight: Date, cellValue: unknown) => {
     if (!cellValue || typeof cellValue !== 'string') {
@@ -122,6 +143,12 @@ const columnDefs: ColDef<GridRow>[] = [
     minWidth: 110,
     maxWidth: 140,
     filter: 'agNumberColumnFilter',
+  },
+  {
+    field: 'id',
+    headerName: 'Task ID',
+    minWidth: 190,
+    filter: 'agTextColumnFilter',
   },
   {
     field: 'name',
@@ -183,12 +210,14 @@ const columnDefs: ColDef<GridRow>[] = [
 ];
 
 export default function Page() {
+  const [bootstrap, setBootstrap] = useState<BootstrapPayload | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [activeProjectId, setActiveProjectId] = useState('');
   const [pinnedProjectIds, setPinnedProjectIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [dataError, setDataError] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -216,46 +245,103 @@ export default function Page() {
   useEffect(() => {
     let cancelled = false;
 
-    const loadSpreadsheet = async () => {
+    const loadPage = async () => {
       setLoading(true);
-      setError(null);
+      setAuthError(null);
+      setDataError(null);
 
       try {
-        const response = await fetch('/api/spreadsheet', { cache: 'no-store' });
-        const payload = (await response.json()) as SpreadsheetPayload;
+        const bootstrapResponse = await fetch('/api/bootstrap', { cache: 'no-store' });
+        const bootstrapPayload = (await bootstrapResponse.json()) as BootstrapPayload;
 
-        if (!response.ok) {
-          throw new Error(payload.message ?? 'Failed to load spreadsheet data.');
+        if (!bootstrapResponse.ok) {
+          throw new Error(bootstrapPayload.message ?? 'Unable to verify the Zoho session.');
         }
 
         if (cancelled) {
           return;
         }
 
-        setProjects(payload.projects ?? []);
-        setTasks(payload.tasks ?? []);
+        setBootstrap(bootstrapPayload);
 
-        const firstProjectId =
-          payload.projects.find((project) =>
-            payload.tasks.some((task) => task.projectId === project.id),
-          )?.id ??
-          payload.projects[0]?.id ??
-          '';
+        if (!bootstrapPayload.authenticated) {
+          setProjects([]);
+          setTasks([]);
+          setActiveProjectId('');
+          return;
+        }
 
-        setActiveProjectId((current) =>
-          current && payload.projects.some((project) => project.id === current)
-            ? current
-            : firstProjectId,
-        );
+        try {
+          const spreadsheetResponse = await fetch('/api/spreadsheet', { cache: 'no-store' });
+          const spreadsheetPayload = (await spreadsheetResponse.json()) as SpreadsheetPayload;
+
+          if (!spreadsheetResponse.ok) {
+            if (spreadsheetResponse.status === 401 || spreadsheetResponse.status === 403) {
+              setBootstrap((current) =>
+                current
+                  ? {
+                      ...current,
+                      authenticated: false,
+                      currentUser: null,
+                      authUrl: current.authUrl ?? LOCALHOST_LOGIN_URL,
+                    }
+                  : {
+                      authenticated: false,
+                      currentUser: null,
+                      authUrl: LOCALHOST_LOGIN_URL,
+                    },
+              );
+              setProjects([]);
+              setTasks([]);
+              setActiveProjectId('');
+              return;
+            }
+
+            throw new Error(
+              spreadsheetPayload.message ?? 'Failed to load the spreadsheet data.',
+            );
+          }
+
+          if (cancelled) {
+            return;
+          }
+
+          setProjects(spreadsheetPayload.projects ?? []);
+          setTasks(spreadsheetPayload.tasks ?? []);
+
+          const firstProjectId =
+            spreadsheetPayload.projects.find((project) =>
+              spreadsheetPayload.tasks.some((task) => task.projectId === project.id),
+            )?.id ??
+            spreadsheetPayload.projects[0]?.id ??
+            '';
+
+          setActiveProjectId((current) =>
+            current &&
+            spreadsheetPayload.projects.some((project) => project.id === current)
+              ? current
+              : firstProjectId,
+          );
+        } catch (spreadsheetError) {
+          if (cancelled) {
+            return;
+          }
+
+          setDataError(
+            spreadsheetError instanceof Error
+              ? spreadsheetError.message
+              : 'Failed to load the spreadsheet data.',
+          );
+        }
       } catch (loadError) {
         if (cancelled) {
           return;
         }
 
-        setError(
+        setAuthError(
           loadError instanceof Error
             ? loadError.message
-            : 'Unable to load the spreadsheet data.',
+            : 'Unable to start Zoho Power Grid.',
         );
       } finally {
         if (!cancelled) {
@@ -264,7 +350,7 @@ export default function Page() {
       }
     };
 
-    void loadSpreadsheet();
+    void loadPage();
 
     return () => {
       cancelled = true;
@@ -339,6 +425,107 @@ export default function Page() {
       ? 'Loading projects...'
       : 'No project selected';
 
+  const loginHref = bootstrap?.authUrl ?? LOCALHOST_LOGIN_URL;
+  const userInitial = getUserInitial(
+    bootstrap?.currentUser?.displayName,
+    bootstrap?.currentUser?.email,
+  );
+
+  if (loading) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top,#dbeafe_0%,#eff6ff_32%,#f8fafc_72%)] px-6 text-slate-900">
+        <div className="w-full max-w-md rounded-[28px] border border-white/70 bg-white/80 p-8 text-center shadow-[0_30px_90px_rgba(15,23,42,0.12)] backdrop-blur">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
+            <FileSpreadsheet className="h-7 w-7" />
+          </div>
+          <h1 className="mt-5 text-2xl font-semibold tracking-tight">
+            Opening Zoho Power Grid
+          </h1>
+          <p className="mt-2 text-sm text-slate-600">
+            Checking your localhost Zoho session before loading the dashboard.
+          </p>
+        </div>
+      </main>
+    );
+  }
+
+  if (!bootstrap?.authenticated) {
+    return (
+      <main className="flex min-h-screen bg-[linear-gradient(135deg,#fff7ed_0%,#eff6ff_42%,#ecfeff_100%)] px-6 py-10 text-slate-900">
+        <div className="mx-auto grid w-full max-w-6xl gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+          <section className="relative overflow-hidden rounded-[36px] border border-slate-200/80 bg-white/90 p-8 shadow-[0_36px_90px_rgba(15,23,42,0.14)] backdrop-blur lg:p-10">
+            <div className="absolute right-0 top-0 h-48 w-48 rounded-full bg-emerald-200/40 blur-3xl" />
+            <div className="absolute bottom-0 left-10 h-36 w-36 rounded-full bg-sky-200/40 blur-3xl" />
+            <div className="relative">
+              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium uppercase tracking-[0.24em] text-emerald-700">
+                <LockKeyhole className="h-3.5 w-3.5" />
+                Login Required
+              </div>
+              <h1 className="mt-6 max-w-xl text-4xl font-semibold tracking-tight text-slate-950 lg:text-5xl">
+                Connect Zoho first, then open the dashboard.
+              </h1>
+              <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600">
+                This localhost build stays locked until a Zoho OAuth session is created.
+                If the user has not signed in with Zoho yet, they stay here instead of
+                landing on the sheet directly.
+              </p>
+
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                <a
+                  href={loginHref}
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-slate-950 px-6 py-3 text-sm font-medium text-white transition hover:bg-slate-800"
+                >
+                  Continue with Zoho
+                  <ArrowRight className="h-4 w-4" />
+                </a>
+                <div className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white/80 px-5 py-3 text-sm text-slate-600">
+                  Local auth callback returns to `localhost:3000`
+                </div>
+              </div>
+
+              {authError ? (
+                <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                  {authError}
+                </div>
+              ) : null}
+            </div>
+          </section>
+
+          <aside className="rounded-[32px] border border-slate-200/80 bg-slate-950 p-6 text-slate-50 shadow-[0_30px_70px_rgba(15,23,42,0.18)] lg:p-8">
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 text-emerald-300">
+                <ShieldCheck className="h-5 w-5" />
+              </div>
+              <div>
+                <div className="text-sm font-medium text-white">Dashboard access is gated</div>
+                <div className="text-sm text-slate-400">
+                  Only signed-in localhost users can reach the grid.
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-8 space-y-4">
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <div className="text-sm font-medium text-white">What happens now</div>
+                <div className="mt-2 text-sm leading-6 text-slate-300">
+                  Zoho OAuth starts from the backend, the callback stores the session cookie,
+                  and then it redirects back to the frontend on `localhost:3000`.
+                </div>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <div className="text-sm font-medium text-white">After login</div>
+                <div className="mt-2 text-sm leading-6 text-slate-300">
+                  The page checks `/api/bootstrap` first. Only after that succeeds do we load
+                  project metadata and task data.
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="flex h-screen w-screen flex-col overflow-hidden bg-white text-sm font-sans">
       <header className="flex h-16 w-full items-center justify-between border-b border-gray-200 px-4">
@@ -364,6 +551,14 @@ export default function Page() {
         </div>
 
         <div className="flex items-center gap-4">
+          <div className="hidden text-right md:block">
+            <div className="text-xs font-medium uppercase tracking-[0.2em] text-gray-400">
+              Connected user
+            </div>
+            <div className="text-sm text-gray-700">
+              {bootstrap.currentUser?.displayName || bootstrap.currentUser?.email}
+            </div>
+          </div>
           <MessageSquare className="h-5 w-5 cursor-pointer text-gray-600" />
           <MoreVertical className="h-5 w-5 cursor-pointer text-gray-600" />
           <div className="flex h-9 cursor-pointer items-center gap-2 rounded-full bg-blue-100 px-5 font-medium text-blue-700 hover:bg-blue-200">
@@ -371,7 +566,7 @@ export default function Page() {
             Share
           </div>
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-600 font-bold text-white">
-            Z
+            {userInitial}
           </div>
         </div>
       </header>
@@ -384,13 +579,13 @@ export default function Page() {
       <div className="flex min-w-0 flex-1 overflow-hidden">
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
           <div className="min-w-0 flex-1 overflow-hidden">
-            {error ? (
+            {dataError ? (
               <div className="flex h-full items-center justify-center bg-white px-6 text-center">
                 <div>
                   <div className="text-base font-medium text-gray-800">
                     Unable to load real project data
                   </div>
-                  <div className="mt-2 text-sm text-gray-500">{error}</div>
+                  <div className="mt-2 text-sm text-gray-500">{dataError}</div>
                 </div>
               </div>
             ) : (

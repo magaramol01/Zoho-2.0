@@ -1,10 +1,12 @@
-import { Body, Controller, Get, Param, Patch, Post, Query } from "@nestjs/common";
+import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from "@nestjs/common";
 import type { TaskPatch } from "@zoho-power-grid/shared";
 import { TaskBulkDto, TaskPatchDto, TaskQueryDto } from "./dto";
 import { TasksService } from "./tasks.service";
 import { CreateTaskLogDto } from "../timesheet/dto";
+import { SessionAuthGuard } from "../auth/session-auth.guard";
 
 @Controller("tasks")
+@UseGuards(SessionAuthGuard)
 export class TasksController {
   constructor(private readonly tasksService: TasksService) {}
 

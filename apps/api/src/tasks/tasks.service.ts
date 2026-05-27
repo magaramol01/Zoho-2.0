@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import type { TaskPatch, TaskRow } from "@zoho-power-grid/shared";
-import { and, desc, eq, like } from "drizzle-orm";
+import { and, desc, eq, inArray, like } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { DatabaseService } from "../db/database.service";
 import {
@@ -69,6 +69,40 @@ export class TasksService {
     };
   }
 
+  private async resolveMissingStatusNames(rows: Array<typeof taskCacheTable.$inferSelect>) {
+    const unresolvedStatusIds = [...new Set(
+      rows
+        .filter((row) => !row.statusName.trim())
+        .map((row) => row.statusId)
+        .filter(Boolean),
+    )];
+
+    if (!unresolvedStatusIds.length) {
+      return rows;
+    }
+
+    const fallbackStatuses = await this.db.db
+      .select({
+        id: statusCacheTable.id,
+        name: statusCacheTable.name,
+      })
+      .from(statusCacheTable)
+      .where(inArray(statusCacheTable.id, unresolvedStatusIds));
+
+    if (!fallbackStatuses.length) {
+      return rows;
+    }
+
+    const fallbackStatusMap = new Map(
+      fallbackStatuses.map((status) => [status.id, status.name]),
+    );
+
+    return rows.map((row) => ({
+      ...row,
+      statusName: row.statusName || fallbackStatusMap.get(row.statusId) || row.statusName,
+    }));
+  }
+
   async getTasks(query: TaskQueryDto) {
     await this.syncTasksIfStale(query);
 
@@ -98,7 +132,9 @@ export class TasksService {
       .where(filters.length ? and(...filters) : undefined)
       .orderBy(desc(taskCacheTable.updatedAt));
 
-    return rows.map((row) => this.toTaskRow(row));
+    const resolvedRows = await this.resolveMissingStatusNames(rows);
+
+    return resolvedRows.map((row) => this.toTaskRow(row));
   }
 
   async syncTasksIfStale(query: TaskQueryDto, force = false) {
@@ -138,7 +174,7 @@ export class TasksService {
               .select()
               .from(sprintCacheTable)
               .where(eq(sprintCacheTable.projectId, project.id)),
-        this.db.db.select().from(statusCacheTable).where(eq(statusCacheTable.projectId, project.id)),
+        this.db.db.select().from(statusCacheTable).where(eq(statusCacheTable.workspaceId, project.workspaceId)),
         this.db.db.select().from(priorityCacheTable).where(eq(priorityCacheTable.projectId, project.id)),
         this.db.db.select().from(userCacheTable).where(eq(userCacheTable.workspaceId, project.workspaceId)),
       ]);
@@ -182,7 +218,7 @@ export class TasksService {
               projectName: project.name,
               sprintId: taskSprintId,
               sprintName: sprintMap.get(taskSprintId) ?? task.sprintName ?? sprint.name,
-              statusName: statusMap.get(task.statusId) ?? task.statusName ?? "Unknown",
+              statusName: statusMap.get(task.statusId) || task.statusName || "Unknown",
               priorityName: task.priorityId ? priorityMap.get(task.priorityId) ?? task.priorityName ?? null : null,
               assigneeNames,
               loggedMinutes,

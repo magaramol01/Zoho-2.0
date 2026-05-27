@@ -4,7 +4,7 @@ import { z } from "zod";
 
 export const envSchema = z.object({
   PORT: z.coerce.number().default(3001),
-  APP_URL: z.string().url().default("http://localhost:5173"),
+  APP_URL: z.string().url().default("http://localhost:3000"),
   SESSION_COOKIE_NAME: z.string().default("zoho_power_grid_session"),
   APP_ENCRYPTION_KEY: z.string().min(32),
   SQLITE_DB_PATH: z.string().default("./data/zoho-power-grid.db"),

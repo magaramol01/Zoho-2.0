@@ -1,8 +1,10 @@
-import { Body, Controller, Get, Param, Patch, Post } from "@nestjs/common";
+import { Body, Controller, Get, Param, Patch, Post, UseGuards } from "@nestjs/common";
+import { SessionAuthGuard } from "../auth/session-auth.guard";
 import { SaveViewDto } from "./dto";
 import { ViewsService } from "./views.service";
 
 @Controller("views")
+@UseGuards(SessionAuthGuard)
 export class ViewsController {
   constructor(private readonly viewsService: ViewsService) {}
 

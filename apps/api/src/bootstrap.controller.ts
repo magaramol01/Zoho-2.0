@@ -6,6 +6,16 @@ import { ViewsService } from "./views/views.service";
 import { AuthService } from "./auth/auth.service";
 import { AppConfigService } from "./common/env";
 
+const emptyMetadata = {
+  workspaces: [],
+  projects: [],
+  sprints: [],
+  statuses: [],
+  priorities: [],
+  users: [],
+  tags: [],
+};
+
 @Controller()
 export class BootstrapController {
   constructor(
@@ -18,19 +28,29 @@ export class BootstrapController {
   @Get("bootstrap")
   async bootstrap(@Req() req: Request): Promise<BootstrapPayload> {
     const session = await this.authService.getSession(req);
+
+    if (!session) {
+      return {
+        authenticated: false,
+        authUrl: this.authService.buildAuthorizationUrl(),
+        currentUser: null,
+        metadata: emptyMetadata,
+        savedViews: [],
+        shortcuts: [],
+      };
+    }
+
     const metadata = await this.metadataService.getMetadata();
     const savedViews = await this.viewsService.listViews();
 
     return {
-      authenticated: Boolean(session),
-      authUrl: session ? null : this.authService.buildAuthorizationUrl(),
-      currentUser: session
-        ? {
-            id: session.userId,
-            email: session.userEmail,
-            displayName: session.userDisplayName,
-          }
-        : null,
+      authenticated: true,
+      authUrl: null,
+      currentUser: {
+        id: session.userId,
+        email: session.userEmail,
+        displayName: session.userDisplayName,
+      },
       metadata,
       savedViews,
       shortcuts: [

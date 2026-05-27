@@ -1,10 +1,14 @@
 import { Controller, Get, Query, Req, Res } from "@nestjs/common";
 import type { Request, Response } from "express";
+import { AppConfigService } from "../common/env";
 import { AuthService } from "./auth.service";
 
 @Controller("auth")
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly config: AppConfigService,
+  ) {}
 
   @Get("login")
   login(@Res() res: Response) {
@@ -19,7 +23,7 @@ export class AuthController {
   ) {
     await this.authService.handleCallback({ code, accountsServer });
     await this.authService.ensureLocalSession(res);
-    return res.redirect("/");
+    return res.redirect(this.config.appUrl);
   }
 
   @Get("logout")

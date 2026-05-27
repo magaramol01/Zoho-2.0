@@ -1,1 +1,105 @@
 @import "tailwindcss";
+
+:root {
+  color-scheme: light;
+  --font-sans: "Segoe UI", Arial, Helvetica, sans-serif;
+  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+button {
+  cursor: pointer;
+}
+
+.sheet-grid {
+  --ag-font-family: var(--font-sans);
+  --ag-font-size: 13px;
+  --ag-grid-size: 6px;
+  --ag-list-item-height: 32px;
+  --ag-row-border-color: #e2e8f0;
+  --ag-borders: none;
+  --ag-header-background-color: #f8fafc;
+  --ag-header-foreground-color: #475569;
+  --ag-odd-row-background-color: #ffffff;
+  --ag-background-color: #ffffff;
+  --ag-border-color: #e2e8f0;
+  --ag-cell-horizontal-border: solid #f1f5f9;
+  --ag-range-selection-border-color: #10b981;
+  --ag-selected-row-background-color: #ecfdf5;
+  --ag-row-hover-color: #f8fafc;
+  --ag-header-column-separator-display: block;
+  --ag-header-column-separator-color: #dbe3ee;
+  --ag-wrapper-border-radius: 0;
+}
+
+.sheet-grid .ag-root-wrapper {
+  border: none;
+  border-radius: 0;
+}
+
+.sheet-grid .ag-body-horizontal-scroll {
+  display: none !important;
+}
+
+.sheet-grid .ag-header {
+  border-bottom: 1px solid #dbe3ee;
+}
+
+.sheet-grid .ag-cell {
+  border-right: 1px solid #f1f5f9;
+}
+
+.sheet-grid .ag-row-number-header,
+.sheet-grid .ag-row-number-cell {
+  background: #f8fafc;
+  color: #64748b;
+}
+
+.sheet-grid .ag-row-number-cell {
+  text-align: right;
+}
+
+.sheet-view-scrollbar,
+.sheet-tabs-scroll {
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f8fafc;
+}
+
+.sheet-tabs-viewport {
+  overscroll-behavior-x: contain;
+}
+
+.sheet-view-scrollbar::-webkit-scrollbar,
+.sheet-tabs-scroll::-webkit-scrollbar {
+  height: 10px;
+}
+
+.sheet-view-scrollbar::-webkit-scrollbar-track,
+.sheet-tabs-scroll::-webkit-scrollbar-track {
+  background: #f8fafc;
+}
+
+.sheet-view-scrollbar::-webkit-scrollbar-thumb,
+.sheet-tabs-scroll::-webkit-scrollbar-thumb {
+  border: 2px solid #f8fafc;
+  border-radius: 999px;
+  background: #cbd5e1;
+}
+
+.sheet-view-scrollbar::-webkit-scrollbar-thumb:hover,
+.sheet-tabs-scroll::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}

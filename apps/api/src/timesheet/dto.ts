@@ -13,6 +13,10 @@ export class TimesheetQueryDto {
   @IsOptional()
   @IsString()
   projectId?: string;
+
+  @IsOptional()
+  @IsString()
+  taskId?: string;
 }
 
 export class CreateTaskLogDto {
@@ -49,4 +53,21 @@ export class BulkTimesheetDto {
   @ValidateNested({ each: true })
   @Type(() => TimesheetDraftDto)
   logs!: TimesheetDraftDto[];
+}
+
+export class UpdateTimesheetLogDto {
+  @IsString()
+  date!: string;
+
+  @IsInt()
+  @Min(1)
+  durationMinutes!: number;
+
+  @IsOptional()
+  @IsString()
+  notes?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  billable?: boolean;
 }

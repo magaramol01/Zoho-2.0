@@ -6,12 +6,16 @@ import BottomTabBar from '@/components/bottom-tab-bar';
 import GridSpace, { type GridRow } from '@/components/grid-space';
 import {
   ArrowRight,
+  CalendarDays,
+  Clock3,
   FileSpreadsheet,
   LockKeyhole,
   MessageSquare,
   MoreVertical,
+  Plus,
   Share,
   ShieldCheck,
+  X,
 } from 'lucide-react';
 
 const PINNED_TABS_STORAGE_KEY = 'zoho-power-grid:pinned-project-tabs';
@@ -41,7 +45,23 @@ type TaskItem = {
   priorityName: string | null;
   assigneeNames: string[];
   dueDate: string | null;
+  estimatedMinutes: number | null;
+  loggedMinutes: number;
   remainingMinutes: number | null;
+  updatedAt: string;
+};
+
+type TaskLog = {
+  id: string;
+  taskId: string | null;
+  projectId: string;
+  projectName: string;
+  sprintId: string | null;
+  taskName: string | null;
+  date: string;
+  durationMinutes: number;
+  notes: string;
+  billable: boolean;
   updatedAt: string;
 };
 
@@ -72,6 +92,12 @@ type BootstrapPayload = {
   details?: string;
 };
 
+type NewLogDraft = {
+  date: string;
+  durationClock: string;
+  billable: boolean;
+};
+
 function formatIsoDate(value: string | null) {
   if (!value || value === '-1') {
     return '';
@@ -84,26 +110,32 @@ function formatIsoDate(value: string | null) {
   return value;
 }
 
-function formatRemainingMinutes(value: number | null) {
-  if (value === null || Number.isNaN(value)) {
-    return '';
+function formatMinutesAsClock(totalMinutes: number | null | undefined) {
+  if (totalMinutes === null || totalMinutes === undefined || Number.isNaN(totalMinutes)) {
+    return '00:00';
   }
 
-  const hours = Math.floor(value / 60);
-  const minutes = value % 60;
-
-  if (!hours) {
-    return `${minutes}m`;
-  }
-
-  if (!minutes) {
-    return `${hours}h`;
-  }
-
-  return `${hours}h ${minutes}m`;
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
 }
 
-function formatUpdatedAt(value: string) {
+function parseClockToMinutes(value: string) {
+  const match = value.match(/^(\d{1,2}):(\d{2})$/);
+  if (!match) {
+    return null;
+  }
+
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  if (Number.isNaN(hours) || Number.isNaN(minutes) || minutes > 59) {
+    return null;
+  }
+
+  return hours * 60 + minutes;
+}
+
+function formatHumanDate(value: string) {
   if (!value) {
     return '';
   }
@@ -113,7 +145,15 @@ function formatUpdatedAt(value: string) {
     return value;
   }
 
-  return parsed.toISOString().slice(0, 10);
+  return parsed.toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
+function getTodayIso() {
+  return new Date().toISOString().slice(0, 10);
 }
 
 function getUserInitial(displayName: string | undefined, email: string | undefined) {
@@ -161,6 +201,18 @@ export default function Page() {
   const [tasksLoading, setTasksLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [dataError, setDataError] = useState<string | null>(null);
+
+  const [logPanelTaskId, setLogPanelTaskId] = useState<string | null>(null);
+  const [logsByTaskId, setLogsByTaskId] = useState<Record<string, TaskLog[]>>({});
+  const [logPanelLoading, setLogPanelLoading] = useState(false);
+  const [logPanelError, setLogPanelError] = useState<string | null>(null);
+  const [savingLogIds, setSavingLogIds] = useState<Record<string, boolean>>({});
+  const [addingLog, setAddingLog] = useState(false);
+  const [newLogDraft, setNewLogDraft] = useState<NewLogDraft>({
+    date: getTodayIso(),
+    durationClock: '00:30',
+    billable: true,
+  });
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -392,6 +444,14 @@ export default function Page() {
 
   const activeProjectTasks = activeProjectId ? tasksByProjectId[activeProjectId] ?? [] : [];
 
+  const selectedTask = useMemo(
+    () =>
+      logPanelTaskId
+        ? activeProjectTasks.find((task) => task.id === logPanelTaskId) ?? null
+        : null,
+    [activeProjectTasks, logPanelTaskId],
+  );
+
   const activeStatusOptions = useMemo(() => {
     const optionMap = new Map<string, StatusOption>();
 
@@ -439,6 +499,114 @@ export default function Page() {
     return [...pinnedProjects, ...unpinnedProjects];
   }, [pinnedProjectIds, projects]);
 
+  const applyTaskLoggedMinutes = useCallback(
+    (taskId: string, loggedMinutes: number) => {
+      if (!activeProjectId) {
+        return;
+      }
+
+      setTasksByProjectId((current) => ({
+        ...current,
+        [activeProjectId]: (current[activeProjectId] ?? []).map((task) =>
+          task.id === taskId
+            ? {
+                ...task,
+                loggedMinutes,
+                remainingMinutes:
+                  task.estimatedMinutes === null
+                    ? null
+                    : Math.max(0, task.estimatedMinutes - loggedMinutes),
+              }
+            : task,
+        ),
+      }));
+    },
+    [activeProjectId],
+  );
+
+  const fetchTaskLogs = useCallback(
+    async (taskId: string) => {
+      if (!activeProjectId) {
+        return;
+      }
+
+      setLogPanelLoading(true);
+      setLogPanelError(null);
+
+      try {
+        const loadLogs = async (includeTaskId: boolean) => {
+          const params = new URLSearchParams({ projectId: activeProjectId });
+          if (includeTaskId) {
+            params.set('taskId', taskId);
+          }
+
+          const response = await fetch(`/api/timesheet?${params.toString()}`, {
+            cache: 'no-store',
+          });
+          const payload = (await response.json()) as Array<TaskLog> & {
+            message?: string;
+            details?: string;
+          };
+
+          return { response, payload };
+        };
+
+        let { response, payload } = await loadLogs(true);
+
+        if (
+          !response.ok &&
+          typeof payload?.message === 'string' &&
+          payload.message.includes('taskId should not exist')
+        ) {
+          ({ response, payload } = await loadLogs(false));
+        }
+
+        if (!response.ok) {
+          throw new Error(payload.message ?? 'Failed to load task log hours.');
+        }
+
+        const logs = (Array.isArray(payload) ? payload : []).filter(
+          (log) => log.taskId === taskId,
+        );
+        setLogsByTaskId((current) => ({
+          ...current,
+          [taskId]: logs,
+        }));
+        applyTaskLoggedMinutes(
+          taskId,
+          logs.reduce((sum, log) => sum + log.durationMinutes, 0),
+        );
+      } catch (error) {
+        setLogPanelError(
+          error instanceof Error ? error.message : 'Failed to load task log hours.',
+        );
+      } finally {
+        setLogPanelLoading(false);
+      }
+    },
+    [activeProjectId, applyTaskLoggedMinutes],
+  );
+
+  const openLogPanel = useCallback(
+    (taskId: string) => {
+      setLogPanelTaskId(taskId);
+      setNewLogDraft({
+        date: getTodayIso(),
+        durationClock: '00:30',
+        billable: true,
+      });
+      void fetchTaskLogs(taskId);
+    },
+    [fetchTaskLogs],
+  );
+
+  const closeLogPanel = useCallback(() => {
+    setLogPanelTaskId(null);
+    setLogPanelError(null);
+    setSavingLogIds({});
+    setAddingLog(false);
+  }, []);
+
   const handleStatusChange = useCallback(
     async (taskId: string, nextStatusName: string, previousStatusName: string) => {
       const statusId = statusIdByName.get(nextStatusName);
@@ -470,28 +638,6 @@ export default function Page() {
         };
 
         if (!response.ok) {
-          if (response.status === 401 || response.status === 403) {
-            setBootstrap((current) =>
-              current
-                ? {
-                    ...current,
-                    authenticated: false,
-                    currentUser: null,
-                    authUrl: current.authUrl ?? LOCALHOST_LOGIN_URL,
-                  }
-                : {
-                    authenticated: false,
-                    currentUser: null,
-                    authUrl: LOCALHOST_LOGIN_URL,
-                    metadata: { statuses: [] },
-                  },
-            );
-            setProjects([]);
-            setTasksByProjectId({});
-            setActiveProjectId('');
-            return;
-          }
-
           throw new Error(payload.message ?? 'Failed to update status in Zoho.');
         }
 
@@ -522,6 +668,133 @@ export default function Page() {
     [activeProjectId, statusIdByName],
   );
 
+  const handleLogFieldChange = useCallback(
+    (logId: string, field: 'date' | 'durationMinutes' | 'billable', value: string | number | boolean) => {
+      if (!logPanelTaskId) {
+        return;
+      }
+
+      setLogsByTaskId((current) => ({
+        ...current,
+        [logPanelTaskId]: (current[logPanelTaskId] ?? []).map((log) =>
+          log.id === logId ? { ...log, [field]: value } : log,
+        ),
+      }));
+    },
+    [logPanelTaskId],
+  );
+
+  const handleSaveLog = useCallback(
+    async (logId: string) => {
+      if (!logPanelTaskId) {
+        return;
+      }
+
+      const log = (logsByTaskId[logPanelTaskId] ?? []).find((entry) => entry.id === logId);
+      if (!log) {
+        return;
+      }
+
+      setSavingLogIds((current) => ({ ...current, [logId]: true }));
+      setLogPanelError(null);
+
+      try {
+        const response = await fetch(`/api/timesheet/${logId}`, {
+          method: 'PATCH',
+          headers: {
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({
+            date: log.date,
+            durationMinutes: log.durationMinutes,
+            billable: log.billable,
+            notes: log.notes,
+          }),
+        });
+        const payload = (await response.json()) as TaskLog & {
+          message?: string;
+          details?: string;
+        };
+
+        if (!response.ok) {
+          throw new Error(payload.message ?? 'Failed to update log hours in Zoho.');
+        }
+
+        setLogsByTaskId((current) => {
+          const nextLogs = (current[logPanelTaskId] ?? []).map((entry) =>
+            entry.id === logId ? { ...entry, ...payload } : entry,
+          );
+          applyTaskLoggedMinutes(
+            logPanelTaskId,
+            nextLogs.reduce((sum, entry) => sum + entry.durationMinutes, 0),
+          );
+          return {
+            ...current,
+            [logPanelTaskId]: nextLogs,
+          };
+        });
+      } catch (error) {
+        setLogPanelError(
+          error instanceof Error ? error.message : 'Failed to update log hours in Zoho.',
+        );
+      } finally {
+        setSavingLogIds((current) => ({ ...current, [logId]: false }));
+      }
+    },
+    [applyTaskLoggedMinutes, logPanelTaskId, logsByTaskId],
+  );
+
+  const handleAddLog = useCallback(async () => {
+    if (!selectedTask) {
+      return;
+    }
+
+    const durationMinutes = parseClockToMinutes(newLogDraft.durationClock);
+    if (durationMinutes === null || durationMinutes <= 0) {
+      setLogPanelError('Enter log hours in HH:MM format.');
+      return;
+    }
+
+    setAddingLog(true);
+    setLogPanelError(null);
+
+    try {
+      const response = await fetch(`/api/tasks/${selectedTask.id}/logs`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          date: newLogDraft.date,
+          durationMinutes,
+          billable: newLogDraft.billable,
+          notes: '',
+        }),
+      });
+      const payload = (await response.json()) as {
+        message?: string;
+        details?: string;
+      };
+
+      if (!response.ok) {
+        throw new Error(payload.message ?? 'Failed to add log hours to Zoho.');
+      }
+
+      setNewLogDraft({
+        date: getTodayIso(),
+        durationClock: '00:30',
+        billable: true,
+      });
+      await fetchTaskLogs(selectedTask.id);
+    } catch (error) {
+      setLogPanelError(
+        error instanceof Error ? error.message : 'Failed to add log hours to Zoho.',
+      );
+    } finally {
+      setAddingLog(false);
+    }
+  }, [fetchTaskLogs, newLogDraft, selectedTask]);
+
   const taskRows = useMemo<GridRow[]>(
     () =>
       activeProjectTasks.map((task) => ({
@@ -535,8 +808,7 @@ export default function Page() {
         sprintName: task.sprintName ?? '',
         dueDate:
           task.dueDate && task.dueDate !== '-1' ? formatIsoDate(task.dueDate) : null,
-        remainingMinutes: task.remainingMinutes,
-        updatedAt: task.updatedAt,
+        loggedMinutes: task.loggedMinutes,
       })),
     [activeProjectTasks],
   );
@@ -618,25 +890,29 @@ export default function Page() {
         valueFormatter: (params) => formatIsoDate(params.value as string | null),
       },
       {
-        field: 'remainingMinutes',
-        headerName: 'Remaining',
-        minWidth: 130,
+        field: 'loggedMinutes',
+        headerName: 'Log Hours',
+        minWidth: 190,
         filter: 'agNumberColumnFilter',
-        valueFormatter: (params) =>
-          formatRemainingMinutes(
-            typeof params.value === 'number' ? params.value : Number(params.value ?? NaN),
-          ),
-      },
-      {
-        field: 'updatedAt',
-        headerName: 'Updated',
-        minWidth: 130,
-        filter: 'agDateColumnFilter',
-        filterParams: dateFilterParams,
-        valueFormatter: (params) => formatUpdatedAt(params.value as string),
+        cellRenderer: (params: { data?: GridRow; value?: string | number | null }) => {
+          const taskId = String(params.data?.id ?? '');
+          const loggedMinutes =
+            typeof params.value === 'number' ? params.value : Number(params.value ?? 0);
+
+          return (
+            <button
+              type="button"
+              onClick={() => taskId && openLogPanel(taskId)}
+              className="inline-flex h-7 items-center gap-2 rounded-full border border-slate-300 bg-white px-3 text-sm text-slate-700 hover:border-blue-400 hover:text-blue-700"
+            >
+              <Clock3 className="h-3.5 w-3.5" />
+              {formatMinutesAsClock(loggedMinutes)}
+            </button>
+          );
+        },
       },
     ],
-    [activeStatusOptions],
+    [activeStatusOptions, handleStatusChange, openLogPanel],
   );
 
   const handleTogglePinnedProject = (projectId: string) => {
@@ -658,6 +934,8 @@ export default function Page() {
     bootstrap?.currentUser?.displayName,
     bootstrap?.currentUser?.email,
   );
+
+  const selectedTaskLogs = selectedTask ? logsByTaskId[selectedTask.id] ?? [] : [];
 
   if (loading) {
     return (
@@ -731,23 +1009,6 @@ export default function Page() {
                 </div>
               </div>
             </div>
-
-            <div className="mt-8 space-y-4">
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <div className="text-sm font-medium text-white">What happens now</div>
-                <div className="mt-2 text-sm leading-6 text-slate-300">
-                  Zoho OAuth starts from the backend, the callback stores the session cookie,
-                  and then it redirects back to the frontend on `localhost:3000`.
-                </div>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <div className="text-sm font-medium text-white">After login</div>
-                <div className="mt-2 text-sm leading-6 text-slate-300">
-                  The page checks `/api/bootstrap` first. Then it loads only the project tabs.
-                  Each project tab fetches its own tasks when you open it.
-                </div>
-              </div>
-            </div>
           </aside>
         </div>
       </main>
@@ -755,98 +1016,362 @@ export default function Page() {
   }
 
   return (
-    <main className="flex h-screen w-screen flex-col overflow-hidden bg-white text-sm font-sans">
-      <header className="flex h-16 w-full items-center justify-between border-b border-gray-200 px-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded bg-green-100 text-green-700">
-            <FileSpreadsheet className="h-6 w-6" />
-          </div>
-          <div className="flex flex-col">
-            <h1 className="text-lg font-medium leading-tight text-gray-800">
-              {activeProject?.name ?? 'Project sheet'}
-            </h1>
-            <div className="mt-1 flex items-center gap-4 text-xs text-gray-500">
-              <span className="cursor-pointer rounded px-1 hover:bg-gray-100">File</span>
-              <span className="cursor-pointer rounded px-1 hover:bg-gray-100">Edit</span>
-              <span className="cursor-pointer rounded px-1 hover:bg-gray-100">View</span>
-              <span className="cursor-pointer rounded px-1 hover:bg-gray-100">Insert</span>
-              <span className="cursor-pointer rounded px-1 hover:bg-gray-100">Format</span>
-              <span className="cursor-pointer rounded px-1 hover:bg-gray-100">Data</span>
-              <span className="cursor-pointer rounded px-1 hover:bg-gray-100">Tools</span>
-              <span className="cursor-pointer rounded px-1 hover:bg-gray-100">Help</span>
+    <>
+      <main className="flex h-screen w-screen flex-col overflow-hidden bg-white text-sm font-sans">
+        <header className="flex h-16 w-full items-center justify-between border-b border-gray-200 px-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded bg-green-100 text-green-700">
+              <FileSpreadsheet className="h-6 w-6" />
+            </div>
+            <div className="flex flex-col">
+              <h1 className="text-lg font-medium leading-tight text-gray-800">
+                {activeProject?.name ?? 'Project sheet'}
+              </h1>
+              <div className="mt-1 flex items-center gap-4 text-xs text-gray-500">
+                <span className="cursor-pointer rounded px-1 hover:bg-gray-100">File</span>
+                <span className="cursor-pointer rounded px-1 hover:bg-gray-100">Edit</span>
+                <span className="cursor-pointer rounded px-1 hover:bg-gray-100">View</span>
+                <span className="cursor-pointer rounded px-1 hover:bg-gray-100">Insert</span>
+                <span className="cursor-pointer rounded px-1 hover:bg-gray-100">Format</span>
+                <span className="cursor-pointer rounded px-1 hover:bg-gray-100">Data</span>
+                <span className="cursor-pointer rounded px-1 hover:bg-gray-100">Tools</span>
+                <span className="cursor-pointer rounded px-1 hover:bg-gray-100">Help</span>
+              </div>
             </div>
           </div>
+
+          <div className="flex items-center gap-4">
+            <div className="hidden text-right md:block">
+              <div className="text-xs font-medium uppercase tracking-[0.2em] text-gray-400">
+                Connected user
+              </div>
+              <div className="text-sm text-gray-700">
+                {bootstrap.currentUser?.displayName || bootstrap.currentUser?.email}
+              </div>
+            </div>
+            <MessageSquare className="h-5 w-5 cursor-pointer text-gray-600" />
+            <MoreVertical className="h-5 w-5 cursor-pointer text-gray-600" />
+            <div className="flex h-9 cursor-pointer items-center gap-2 rounded-full bg-blue-100 px-5 font-medium text-blue-700 hover:bg-blue-200">
+              <Share className="h-4 w-4" />
+              Share
+            </div>
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-600 font-bold text-white">
+              {userInitial}
+            </div>
+          </div>
+        </header>
+
+        <div className="flex h-9 w-full min-w-0 items-center gap-2 border-b border-gray-200 bg-gray-50 px-4 text-gray-600">
+          <div className="border-r border-gray-300 pr-2 font-mono text-xs text-gray-500">fx</div>
+          <div className="min-w-0 flex-1 truncate text-sm">{formulaText}</div>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="hidden text-right md:block">
-            <div className="text-xs font-medium uppercase tracking-[0.2em] text-gray-400">
-              Connected user
+        <div className="flex min-w-0 flex-1 overflow-hidden">
+          <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+            <div className="min-w-0 flex-1 overflow-hidden">
+              {dataError ? (
+                <div className="flex h-full items-center justify-center bg-white px-6 text-center">
+                  <div>
+                    <div className="text-base font-medium text-gray-800">
+                      Unable to load real project data
+                    </div>
+                    <div className="mt-2 text-sm text-gray-500">{dataError}</div>
+                  </div>
+                </div>
+              ) : tasksLoading && !(activeProject?.id && activeProject.id in tasksByProjectId) ? (
+                <div className="flex h-full items-center justify-center bg-white px-6 text-center">
+                  <div>
+                    <div className="text-base font-medium text-gray-800">
+                      Loading {activeProject?.name ?? 'project'} tab
+                    </div>
+                    <div className="mt-2 text-sm text-gray-500">
+                      Fetching only this tab&apos;s tasks to keep the dashboard fast.
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <GridSpace
+                  key={activeProject?.id ?? 'grid'}
+                  rowData={taskRows}
+                  columnDefs={columnDefs}
+                  filterStorageKey={
+                    activeProject ? `zoho-power-grid:filters:${activeProject.id}` : null
+                  }
+                />
+              )}
             </div>
-            <div className="text-sm text-gray-700">
-              {bootstrap.currentUser?.displayName || bootstrap.currentUser?.email}
-            </div>
-          </div>
-          <MessageSquare className="h-5 w-5 cursor-pointer text-gray-600" />
-          <MoreVertical className="h-5 w-5 cursor-pointer text-gray-600" />
-          <div className="flex h-9 cursor-pointer items-center gap-2 rounded-full bg-blue-100 px-5 font-medium text-blue-700 hover:bg-blue-200">
-            <Share className="h-4 w-4" />
-            Share
-          </div>
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-600 font-bold text-white">
-            {userInitial}
+            <BottomTabBar
+              sheets={orderedProjects.map((project) => ({ id: project.id, name: project.name }))}
+              activeSheetId={activeProject?.id ?? ''}
+              onSheetChange={setActiveProjectId}
+              pinnedSheetIds={pinnedProjectIds}
+              onTogglePin={handleTogglePinnedProject}
+            />
           </div>
         </div>
-      </header>
+      </main>
 
-      <div className="flex h-9 w-full min-w-0 items-center gap-2 border-b border-gray-200 bg-gray-50 px-4 text-gray-600">
-        <div className="border-r border-gray-300 pr-2 font-mono text-xs text-gray-500">fx</div>
-        <div className="min-w-0 flex-1 truncate text-sm">{formulaText}</div>
-      </div>
+      {selectedTask ? (
+        <TaskLogDrawer
+          task={selectedTask}
+          logs={selectedTaskLogs}
+          loading={logPanelLoading}
+          error={logPanelError}
+          onClose={closeLogPanel}
+          onRefresh={() => void fetchTaskLogs(selectedTask.id)}
+          onLogFieldChange={handleLogFieldChange}
+          onSaveLog={handleSaveLog}
+          savingLogIds={savingLogIds}
+          newLogDraft={newLogDraft}
+          setNewLogDraft={setNewLogDraft}
+          onAddLog={() => void handleAddLog()}
+          addingLog={addingLog}
+        />
+      ) : null}
+    </>
+  );
+}
 
-      <div className="flex min-w-0 flex-1 overflow-hidden">
-        <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-          <div className="min-w-0 flex-1 overflow-hidden">
-            {dataError ? (
-              <div className="flex h-full items-center justify-center bg-white px-6 text-center">
-                <div>
-                  <div className="text-base font-medium text-gray-800">
-                    Unable to load real project data
-                  </div>
-                  <div className="mt-2 text-sm text-gray-500">{dataError}</div>
-                </div>
-              </div>
-            ) : tasksLoading && !(activeProject?.id && activeProject.id in tasksByProjectId) ? (
-              <div className="flex h-full items-center justify-center bg-white px-6 text-center">
-                <div>
-                  <div className="text-base font-medium text-gray-800">
-                    Loading {activeProject?.name ?? 'project'} tab
-                  </div>
-                  <div className="mt-2 text-sm text-gray-500">
-                    Fetching only this tab&apos;s tasks to keep the dashboard fast.
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <GridSpace
-                key={activeProject?.id ?? 'grid'}
-                rowData={taskRows}
-                columnDefs={columnDefs}
-                filterStorageKey={
-                  activeProject ? `zoho-power-grid:filters:${activeProject.id}` : null
+function TaskLogDrawer({
+  task,
+  logs,
+  loading,
+  error,
+  onClose,
+  onRefresh,
+  onLogFieldChange,
+  onSaveLog,
+  savingLogIds,
+  newLogDraft,
+  setNewLogDraft,
+  onAddLog,
+  addingLog,
+}: {
+  task: TaskItem;
+  logs: TaskLog[];
+  loading: boolean;
+  error: string | null;
+  onClose: () => void;
+  onRefresh: () => void;
+  onLogFieldChange: (
+    logId: string,
+    field: 'date' | 'durationMinutes' | 'billable',
+    value: string | number | boolean,
+  ) => void;
+  onSaveLog: (logId: string) => void;
+  savingLogIds: Record<string, boolean>;
+  newLogDraft: NewLogDraft;
+  setNewLogDraft: React.Dispatch<React.SetStateAction<NewLogDraft>>;
+  onAddLog: () => void;
+  addingLog: boolean;
+}) {
+  const groupedLogs = useMemo(() => {
+    const groups = new Map<string, TaskLog[]>();
+
+    for (const log of logs) {
+      const dateKey = log.date;
+      const existing = groups.get(dateKey) ?? [];
+      existing.push(log);
+      groups.set(dateKey, existing);
+    }
+
+    return [...groups.entries()]
+      .sort((left, right) => right[0].localeCompare(left[0]))
+      .map(([date, entries]) => ({
+        date,
+        totalMinutes: entries.reduce((sum, entry) => sum + entry.durationMinutes, 0),
+        entries,
+      }));
+  }, [logs]);
+
+  const totalLoggedMinutes = logs.reduce((sum, log) => sum + log.durationMinutes, 0);
+
+  return (
+    <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/25 backdrop-blur-[1px]">
+      <div className="flex h-full w-full max-w-2xl flex-col border-l border-slate-200 bg-white shadow-2xl">
+        <div className="flex items-start justify-between border-b border-slate-200 px-6 py-5">
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
+              Log Hours
+            </div>
+            <h2 className="mt-2 text-xl font-semibold text-slate-900">{task.name}</h2>
+            <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-slate-500">
+              <span>{task.projectName}</span>
+              <span>{task.sprintName ?? 'No sprint'}</span>
+              <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 font-medium text-slate-700">
+                <Clock3 className="h-3.5 w-3.5" />
+                Total {formatMinutesAsClock(totalLoggedMinutes)}
+              </span>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full border border-slate-300 p-2 text-slate-500 hover:border-slate-400 hover:text-slate-800"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="border-b border-slate-200 bg-slate-50 px-6 py-4">
+          <div className="grid gap-3 md:grid-cols-[1fr_140px_100px_auto]">
+            <label className="flex flex-col gap-2 text-sm text-slate-600">
+              <span className="font-medium">Date</span>
+              <input
+                type="date"
+                value={newLogDraft.date}
+                onChange={(event) =>
+                  setNewLogDraft((current) => ({ ...current, date: event.target.value }))
+                }
+                className="h-10 rounded-xl border border-slate-300 bg-white px-3 text-slate-800 outline-none focus:border-blue-500"
+              />
+            </label>
+            <label className="flex flex-col gap-2 text-sm text-slate-600">
+              <span className="font-medium">Logged</span>
+              <input
+                type="time"
+                step={300}
+                value={newLogDraft.durationClock}
+                onChange={(event) =>
+                  setNewLogDraft((current) => ({
+                    ...current,
+                    durationClock: event.target.value,
+                  }))
+                }
+                className="h-10 rounded-xl border border-slate-300 bg-white px-3 text-slate-800 outline-none focus:border-blue-500"
+              />
+            </label>
+            <label className="flex items-end gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700">
+              <input
+                type="checkbox"
+                checked={newLogDraft.billable}
+                onChange={(event) =>
+                  setNewLogDraft((current) => ({
+                    ...current,
+                    billable: event.target.checked,
+                  }))
                 }
               />
-            )}
+              Billable
+            </label>
+            <button
+              type="button"
+              onClick={onAddLog}
+              disabled={addingLog}
+              className="inline-flex h-10 items-center justify-center gap-2 self-end rounded-xl bg-slate-950 px-4 text-sm font-medium text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+            >
+              <Plus className="h-4 w-4" />
+              {addingLog ? 'Adding...' : 'Add Log'}
+            </button>
           </div>
-          <BottomTabBar
-            sheets={orderedProjects.map((project) => ({ id: project.id, name: project.name }))}
-            activeSheetId={activeProject?.id ?? ''}
-            onSheetChange={setActiveProjectId}
-            pinnedSheetIds={pinnedProjectIds}
-            onTogglePin={handleTogglePinnedProject}
-          />
+        </div>
+
+        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-3 text-sm text-slate-500">
+          <div className="inline-flex items-center gap-2">
+            <CalendarDays className="h-4 w-4" />
+            Grouped by date with editable hours
+          </div>
+          <button
+            type="button"
+            onClick={onRefresh}
+            className="rounded-full border border-slate-300 px-3 py-1 text-slate-600 hover:border-slate-400 hover:text-slate-900"
+          >
+            Refresh
+          </button>
+        </div>
+
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+          {error ? (
+            <div className="mb-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+              {error}
+            </div>
+          ) : null}
+
+          {loading ? (
+            <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center text-slate-500">
+              Loading task log hours...
+            </div>
+          ) : groupedLogs.length ? (
+            <div className="space-y-5">
+              {groupedLogs.map((group) => (
+                <section
+                  key={group.date}
+                  className="rounded-3xl border border-slate-200 bg-white shadow-sm"
+                >
+                  <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+                    <div className="text-sm font-semibold text-slate-900">
+                      {formatHumanDate(group.date)}
+                    </div>
+                    <div className="rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-700">
+                      {formatMinutesAsClock(group.totalMinutes)}
+                    </div>
+                  </div>
+
+                  <div className="divide-y divide-slate-100">
+                    {group.entries.map((log) => (
+                      <div
+                        key={log.id}
+                        className="grid gap-3 px-5 py-4 md:grid-cols-[1fr_130px_90px_auto]"
+                      >
+                        <label className="flex flex-col gap-2 text-sm text-slate-600">
+                          <span className="font-medium">Date</span>
+                          <input
+                            type="date"
+                            value={log.date}
+                            onChange={(event) =>
+                              onLogFieldChange(log.id, 'date', event.target.value)
+                            }
+                            className="h-10 rounded-xl border border-slate-300 bg-white px-3 text-slate-800 outline-none focus:border-blue-500"
+                          />
+                        </label>
+                        <label className="flex flex-col gap-2 text-sm text-slate-600">
+                          <span className="font-medium">Logged</span>
+                          <input
+                            type="time"
+                            step={300}
+                            value={formatMinutesAsClock(log.durationMinutes)}
+                            onChange={(event) => {
+                              const nextMinutes = parseClockToMinutes(event.target.value);
+                              if (nextMinutes !== null) {
+                                onLogFieldChange(log.id, 'durationMinutes', nextMinutes);
+                              }
+                            }}
+                            className="h-10 rounded-xl border border-slate-300 bg-white px-3 text-slate-800 outline-none focus:border-blue-500"
+                          />
+                        </label>
+                        <label className="flex items-end gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700">
+                          <input
+                            type="checkbox"
+                            checked={log.billable}
+                            onChange={(event) =>
+                              onLogFieldChange(log.id, 'billable', event.target.checked)
+                            }
+                          />
+                          Billable
+                        </label>
+                        <div className="flex items-end">
+                          <button
+                            type="button"
+                            onClick={() => onSaveLog(log.id)}
+                            disabled={Boolean(savingLogIds[log.id])}
+                            className="inline-flex h-10 w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 hover:border-slate-400 hover:text-slate-900 disabled:cursor-not-allowed disabled:bg-slate-100"
+                          >
+                            {savingLogIds[log.id] ? 'Saving...' : 'Save'}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center text-slate-500">
+              No log hours yet for this task. Add the first entry above.
+            </div>
+          )}
         </div>
       </div>
-    </main>
+    </div>
   );
 }

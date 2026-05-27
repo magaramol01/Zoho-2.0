@@ -20,6 +20,11 @@ import type { CreateTaskLogDto } from "../timesheet/dto";
 import { SyncService } from "../sync/sync.service";
 import { ZohoApiClient } from "../zoho/zoho-api.client";
 import { ZohoNormalizer } from "../zoho/zoho-normalizer";
+import {
+  toZohoBooleanFlag,
+  toZohoLogDateTime,
+  toZohoLogDuration,
+} from "../zoho/zoho-timesheet";
 
 const parseJsonList = (value: string) => {
   try {
@@ -455,24 +460,27 @@ export class TasksService {
       throw new NotFoundException("Task not found");
     }
 
+    let zohoResponse: unknown = null;
+
     if ((await this.zohoApiClient.canUseZoho()) && task.sprintId) {
       const [fallbackUser] = await this.db.db.select().from(userCacheTable).limit(1);
       const assigneeIds = parseJsonList(task.assigneeIdsJson);
-      await this.zohoApiClient.request({
+      zohoResponse = await this.zohoApiClient.request({
         path: `/zsapi/team/${task.workspaceId}/projects/${task.projectId}/sprints/${task.sprintId}/item/${taskId}/timesheet/`,
         method: "POST",
         query: {
           action: "additemlog",
-          duration: body.durationMinutes,
-          date: body.date,
+          duration: toZohoLogDuration(body.durationMinutes),
+          date: toZohoLogDateTime(body.date),
           notes: body.notes ?? "",
           users: assigneeIds[0] ?? fallbackUser?.id ?? "",
-          isbillable: body.billable,
+          isbillable: toZohoBooleanFlag(body.billable),
         },
       });
     }
 
-    const logId = nanoid();
+    const logId =
+      this.zohoNormalizer.normalizeTimesheetLogs(zohoResponse).find((log) => log.id)?.id ?? nanoid();
     await this.db.db.insert(timesheetLogCacheTable).values({
       id: logId,
       taskId,

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ZohoNormalizer } from "./zoho-normalizer";
+import { toZohoLogDateTime, toZohoLogDuration } from "./zoho-timesheet";
 
 describe("ZohoNormalizer", () => {
   const normalizer = new ZohoNormalizer();
@@ -68,5 +69,43 @@ describe("ZohoNormalizer", () => {
       statusId: "st2",
       statusName: "In progress",
     });
+  });
+
+  it("normalizes Zoho billable flags from 0 and 1 values", () => {
+    const result = normalizer.normalizeTimesheetLogs({
+      data: [
+        {
+          id: "log-1",
+          itemid: "task-1",
+          projectid: "project-1",
+          date: "2026-05-27",
+          duration: "30",
+          isbillable: "0",
+        },
+        {
+          id: "log-2",
+          itemid: "task-1",
+          projectid: "project-1",
+          date: "2026-05-27",
+          duration: "45",
+          isbillable: "1",
+        },
+      ],
+    });
+
+    expect(result).toHaveLength(2);
+    expect(result[0]?.billable).toBe(false);
+    expect(result[1]?.billable).toBe(true);
+  });
+
+  it("formats log dates for Zoho timesheet write APIs", () => {
+    expect(toZohoLogDateTime("2026-05-27")).toMatch(
+      /^2026-05-27T00:00:00[+-]\d{4}$/,
+    );
+  });
+
+  it("formats log duration for Zoho timesheet write APIs", () => {
+    expect(toZohoLogDuration(30)).toBe("00:30");
+    expect(toZohoLogDuration(452)).toBe("07:32");
   });
 });

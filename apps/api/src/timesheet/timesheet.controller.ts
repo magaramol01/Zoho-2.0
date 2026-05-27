@@ -1,6 +1,6 @@
-import { Body, Controller, Get, Post, Query, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from "@nestjs/common";
 import { SessionAuthGuard } from "../auth/session-auth.guard";
-import { BulkTimesheetDto, TimesheetQueryDto } from "./dto";
+import { BulkTimesheetDto, TimesheetQueryDto, UpdateTimesheetLogDto } from "./dto";
 import { TimesheetService } from "./timesheet.service";
 
 @Controller("timesheet")
@@ -16,5 +16,10 @@ export class TimesheetController {
   @Post("bulk")
   createLogs(@Body() body: BulkTimesheetDto) {
     return this.timesheetService.createLogs(body.logs);
+  }
+
+  @Patch(":logId")
+  updateLog(@Param("logId") logId: string, @Body() body: UpdateTimesheetLogDto) {
+    return this.timesheetService.updateLog(logId, body);
   }
 }

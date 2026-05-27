@@ -13,6 +13,18 @@ const asNullableString = (value: unknown) => {
   const resolved = asString(value);
   return resolved || null;
 };
+const asZohoBoolean = (value: unknown) => {
+  if (typeof value === "boolean") {
+    return value;
+  }
+
+  const normalized = asString(value).trim().toLowerCase();
+  if (!normalized) {
+    return false;
+  }
+
+  return normalized === "1" || normalized === "true" || normalized === "yes";
+};
 const parseDurationToMinutes = (value: unknown) => {
   if (typeof value === "number") {
     // Zoho timesheet durations often arrive in milliseconds.
@@ -333,7 +345,7 @@ export class ZohoNormalizer {
           date: asString(values[Number(props.logDate ?? 12)]).slice(0, 10),
           durationMinutes: parseDurationToMinutes(values[Number(props.timeTaken ?? props.duration ?? 13)]),
           notes: asString(values[Number(props.logNotes ?? 18)]),
-          billable: Boolean(values[Number(props.billableType ?? 14)]),
+          billable: asZohoBoolean(values[Number(props.billableType ?? 14)]),
           updatedAt: asString(values[Number(props.lastUpdatedTime ?? 28)]) || new Date().toISOString(),
         }))
         .filter((row): row is TimesheetLog => Boolean(row.id));
@@ -356,10 +368,10 @@ export class ZohoNormalizer {
           projectName: asString(row.projectname ?? row.projectName),
           sprintId: asNullableString(row.sprintid ?? row.sprintId),
           taskName: asNullableString(row.itemname ?? row.taskName ?? row.logtitle),
-          date: asString(row.date),
+          date: asString(row.date).slice(0, 10),
           durationMinutes: parseDurationToMinutes(row.duration ?? row.minutes),
           notes: asString(row.notes),
-          billable: Boolean(row.isbillable ?? row.billable),
+          billable: asZohoBoolean(row.isbillable ?? row.billable),
           updatedAt: new Date().toISOString(),
         } satisfies TimesheetLog;
       })

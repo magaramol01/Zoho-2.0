@@ -293,7 +293,15 @@ export class ZohoNormalizer {
           sprintId: asNullableString(row.sprintid ?? row.sprintId ?? sprint.id ?? sprint.sprintid),
           sprintName: asNullableString(row.sprintname ?? row.sprintName ?? sprint.name),
           statusId: asString(row.statusid ?? row.statusId ?? status.id ?? status.statusid),
-          statusName: asString(row.statusname ?? row.statusName ?? status.name),
+          statusName: asString(
+            row.statusname ??
+              row.statusName ??
+              status.statusname ??
+              status.statusName ??
+              status.name ??
+              status.label ??
+              status.value,
+          ),
           priorityId: asNullableString(row.priorityid ?? row.priorityId ?? priority.id ?? priority.priorityid),
           priorityName: asNullableString(row.priorityname ?? row.priorityName ?? priority.name),
           assigneeIds: assignees.map((user) => asString(user.id ?? user.userid ?? user.userId)).filter(Boolean),

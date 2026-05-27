@@ -43,4 +43,30 @@ describe("ZohoNormalizer", () => {
       remainingMinutes: 75,
     });
   });
+
+  it("normalizes nested status objects that expose statusname", () => {
+    const result = normalizer.normalizeTasks({
+      data: [
+        {
+          itemid: "456",
+          itemno: "PG-2",
+          name: "Nested status task",
+          projectid: "p2",
+          status: {
+            id: "st2",
+            statusname: "In progress",
+          },
+          users: [],
+          tags: [],
+        },
+      ],
+    });
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({
+      id: "456",
+      statusId: "st2",
+      statusName: "In progress",
+    });
+  });
 });

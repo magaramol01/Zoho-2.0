@@ -97,10 +97,27 @@ export class TasksService {
       fallbackStatuses.map((status) => [status.id, status.name]),
     );
 
-    return rows.map((row) => ({
+    const resolvedRows = rows.map((row) => ({
       ...row,
       statusName: row.statusName || fallbackStatusMap.get(row.statusId) || row.statusName,
     }));
+
+    const rowsToPersist = resolvedRows.filter(
+      (row, index) =>
+        !rows[index]?.statusName.trim() && row.statusName.trim(),
+    );
+
+    for (const row of rowsToPersist) {
+      await this.db.db
+        .update(taskCacheTable)
+        .set({
+          statusName: row.statusName,
+          updatedAt: new Date().toISOString(),
+        })
+        .where(eq(taskCacheTable.id, row.id));
+    }
+
+    return resolvedRows;
   }
 
   async getTasks(query: TaskQueryDto) {
@@ -306,6 +323,27 @@ export class TasksService {
       throw new NotFoundException("Task not found");
     }
 
+    const [statusRow] =
+      patch.statusId && patch.statusId !== existing.statusId
+        ? await this.db.db
+            .select({
+              name: statusCacheTable.name,
+            })
+            .from(statusCacheTable)
+            .where(eq(statusCacheTable.id, patch.statusId))
+            .limit(1)
+        : [];
+    const [priorityRow] =
+      patch.priorityId !== undefined && patch.priorityId !== existing.priorityId && patch.priorityId !== null
+        ? await this.db.db
+            .select({
+              name: priorityCacheTable.name,
+            })
+            .from(priorityCacheTable)
+            .where(eq(priorityCacheTable.id, patch.priorityId))
+            .limit(1)
+        : [];
+
     if ((await this.zohoApiClient.canUseZoho()) && existing.sprintId) {
       await this.zohoApiClient.request({
         path: `/zsapi/team/${existing.workspaceId}/projects/${existing.projectId}/sprints/${existing.sprintId}/item/${taskId}/`,
@@ -323,7 +361,16 @@ export class TasksService {
     const updated = {
       name: patch.name ?? existing.name,
       statusId: patch.statusId ?? existing.statusId,
+      statusName: patch.statusId === undefined
+        ? existing.statusName
+        : statusRow?.name ?? existing.statusName,
       priorityId: patch.priorityId === undefined ? existing.priorityId : patch.priorityId,
+      priorityName:
+        patch.priorityId === undefined
+          ? existing.priorityName
+          : patch.priorityId === null
+            ? null
+            : priorityRow?.name ?? existing.priorityName,
       dueDate: patch.dueDate === undefined ? existing.dueDate : patch.dueDate,
       estimatedMinutes: patch.estimatedMinutes === undefined ? existing.estimatedMinutes : patch.estimatedMinutes,
       remainingMinutes: patch.remainingMinutes === undefined ? existing.remainingMinutes : patch.remainingMinutes,

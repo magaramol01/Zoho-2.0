@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ColDef } from 'ag-grid-community';
 import BottomTabBar from '@/components/bottom-tab-bar';
 import GridSpace, { type GridRow } from '@/components/grid-space';
@@ -22,6 +22,12 @@ type Project = {
   name: string;
 };
 
+type StatusOption = {
+  id: string;
+  name: string;
+  projectId?: string;
+};
+
 type TaskItem = {
   id: string;
   itemNo: string;
@@ -30,6 +36,7 @@ type TaskItem = {
   projectId: string;
   projectName: string;
   sprintName: string | null;
+  statusId: string;
   statusName: string;
   priorityName: string | null;
   assigneeNames: string[];
@@ -58,6 +65,9 @@ type BootstrapPayload = {
     email: string;
     displayName: string;
   } | null;
+  metadata: {
+    statuses: StatusOption[];
+  };
   message?: string;
   details?: string;
 };
@@ -141,79 +151,6 @@ const dateFilterParams = {
   },
 };
 
-const columnDefs: ColDef<GridRow>[] = [
-  {
-    field: 'itemNo',
-    headerName: 'Item',
-    minWidth: 110,
-    maxWidth: 140,
-    filter: 'agNumberColumnFilter',
-  },
-  {
-    field: 'id',
-    headerName: 'Task ID',
-    minWidth: 190,
-    filter: 'agTextColumnFilter',
-  },
-  {
-    field: 'name',
-    headerName: 'Title',
-    minWidth: 260,
-    flex: 1.8,
-    filter: 'agTextColumnFilter',
-  },
-  {
-    field: 'statusName',
-    headerName: 'Status',
-    minWidth: 160,
-    filter: 'agTextColumnFilter',
-  },
-  {
-    field: 'priorityName',
-    headerName: 'Priority',
-    minWidth: 130,
-    filter: 'agTextColumnFilter',
-  },
-  {
-    field: 'assigneeNames',
-    headerName: 'Assignees',
-    minWidth: 180,
-    filter: 'agTextColumnFilter',
-  },
-  {
-    field: 'sprintName',
-    headerName: 'Sprint',
-    minWidth: 180,
-    filter: 'agTextColumnFilter',
-  },
-  {
-    field: 'dueDate',
-    headerName: 'Due date',
-    minWidth: 130,
-    filter: 'agDateColumnFilter',
-    filterParams: dateFilterParams,
-    valueFormatter: (params) => formatIsoDate(params.value as string | null),
-  },
-  {
-    field: 'remainingMinutes',
-    headerName: 'Remaining',
-    minWidth: 130,
-    filter: 'agNumberColumnFilter',
-    valueFormatter: (params) =>
-      formatRemainingMinutes(
-        typeof params.value === 'number' ? params.value : Number(params.value ?? NaN),
-      ),
-  },
-  {
-    field: 'updatedAt',
-    headerName: 'Updated',
-    minWidth: 130,
-    filter: 'agDateColumnFilter',
-    filterParams: dateFilterParams,
-    valueFormatter: (params) => formatUpdatedAt(params.value as string),
-  },
-];
-
 export default function Page() {
   const [bootstrap, setBootstrap] = useState<BootstrapPayload | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -295,6 +232,7 @@ export default function Page() {
                       authenticated: false,
                       currentUser: null,
                       authUrl: LOCALHOST_LOGIN_URL,
+                      metadata: { statuses: [] },
                     },
               );
               setProjects([]);
@@ -403,6 +341,7 @@ export default function Page() {
                     authenticated: false,
                     currentUser: null,
                     authUrl: LOCALHOST_LOGIN_URL,
+                    metadata: { statuses: [] },
                   },
             );
             setProjects([]);
@@ -451,6 +390,37 @@ export default function Page() {
     [activeProjectId, projects],
   );
 
+  const activeProjectTasks = activeProjectId ? tasksByProjectId[activeProjectId] ?? [] : [];
+
+  const activeStatusOptions = useMemo(() => {
+    const optionMap = new Map<string, StatusOption>();
+
+    for (const status of bootstrap?.metadata.statuses ?? []) {
+      if (!status.projectId || status.projectId === activeProject?.id) {
+        optionMap.set(status.id, status);
+      }
+    }
+
+    for (const task of activeProjectTasks) {
+      if (task.statusId && task.statusName && !optionMap.has(task.statusId)) {
+        optionMap.set(task.statusId, {
+          id: task.statusId,
+          name: task.statusName,
+          projectId: activeProject?.id,
+        });
+      }
+    }
+
+    return [...optionMap.values()].sort((left, right) =>
+      left.name.localeCompare(right.name),
+    );
+  }, [activeProject?.id, activeProjectTasks, bootstrap?.metadata.statuses]);
+
+  const statusIdByName = useMemo(
+    () => new Map(activeStatusOptions.map((status) => [status.name, status.id])),
+    [activeStatusOptions],
+  );
+
   const orderedProjects = useMemo(() => {
     const pinnedOrder = new Map(
       pinnedProjectIds.map((projectId, index) => [projectId, index]),
@@ -469,7 +439,88 @@ export default function Page() {
     return [...pinnedProjects, ...unpinnedProjects];
   }, [pinnedProjectIds, projects]);
 
-  const activeProjectTasks = activeProjectId ? tasksByProjectId[activeProjectId] ?? [] : [];
+  const handleStatusChange = useCallback(
+    async (taskId: string, nextStatusName: string, previousStatusName: string) => {
+      const statusId = statusIdByName.get(nextStatusName);
+
+      if (!taskId || !statusId || !activeProjectId || nextStatusName === previousStatusName) {
+        return;
+      }
+
+      setDataError(null);
+
+      setTasksByProjectId((current) => ({
+        ...current,
+        [activeProjectId]: (current[activeProjectId] ?? []).map((task) =>
+          task.id === taskId ? { ...task, statusId, statusName: nextStatusName } : task,
+        ),
+      }));
+
+      try {
+        const response = await fetch(`/api/tasks/${taskId}`, {
+          method: 'PATCH',
+          headers: {
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({ statusId }),
+        });
+        const payload = (await response.json()) as TaskItem & {
+          message?: string;
+          details?: string;
+        };
+
+        if (!response.ok) {
+          if (response.status === 401 || response.status === 403) {
+            setBootstrap((current) =>
+              current
+                ? {
+                    ...current,
+                    authenticated: false,
+                    currentUser: null,
+                    authUrl: current.authUrl ?? LOCALHOST_LOGIN_URL,
+                  }
+                : {
+                    authenticated: false,
+                    currentUser: null,
+                    authUrl: LOCALHOST_LOGIN_URL,
+                    metadata: { statuses: [] },
+                  },
+            );
+            setProjects([]);
+            setTasksByProjectId({});
+            setActiveProjectId('');
+            return;
+          }
+
+          throw new Error(payload.message ?? 'Failed to update status in Zoho.');
+        }
+
+        setTasksByProjectId((current) => ({
+          ...current,
+          [activeProjectId]: (current[activeProjectId] ?? []).map((task) =>
+            task.id === taskId ? { ...task, ...payload } : task,
+          ),
+        }));
+      } catch (error) {
+        setTasksByProjectId((current) => ({
+          ...current,
+          [activeProjectId]: (current[activeProjectId] ?? []).map((task) =>
+            task.id === taskId
+              ? {
+                  ...task,
+                  statusId: statusIdByName.get(previousStatusName) ?? task.statusId,
+                  statusName: previousStatusName,
+                }
+              : task,
+          ),
+        }));
+        setDataError(
+          error instanceof Error ? error.message : 'Failed to update status in Zoho.',
+        );
+      }
+    },
+    [activeProjectId, statusIdByName],
+  );
 
   const taskRows = useMemo<GridRow[]>(
     () =>
@@ -477,6 +528,7 @@ export default function Page() {
         id: task.id,
         itemNo: Number(task.itemNo),
         name: task.name,
+        statusId: task.statusId,
         statusName: task.statusName,
         priorityName: task.priorityName ?? '',
         assigneeNames: task.assigneeNames.join(', '),
@@ -487,6 +539,104 @@ export default function Page() {
         updatedAt: task.updatedAt,
       })),
     [activeProjectTasks],
+  );
+
+  const columnDefs = useMemo<ColDef<GridRow>[]>(
+    () => [
+      {
+        field: 'itemNo',
+        headerName: 'Item',
+        minWidth: 110,
+        maxWidth: 140,
+        filter: 'agNumberColumnFilter',
+      },
+      {
+        field: 'id',
+        headerName: 'Task ID',
+        minWidth: 190,
+        filter: 'agTextColumnFilter',
+      },
+      {
+        field: 'name',
+        headerName: 'Title',
+        minWidth: 260,
+        flex: 1.8,
+        filter: 'agTextColumnFilter',
+      },
+      {
+        field: 'statusName',
+        headerName: 'Status',
+        minWidth: 220,
+        filter: 'agTextColumnFilter',
+        cellRenderer: (params: { data?: GridRow; value?: string | number | null }) => {
+          const taskId = String(params.data?.id ?? '');
+          const currentValue =
+            typeof params.value === 'string' ? params.value : String(params.value ?? '');
+
+          return (
+            <select
+              value={currentValue}
+              disabled={!taskId || activeStatusOptions.length === 0}
+              onChange={(event) =>
+                void handleStatusChange(taskId, event.target.value, currentValue)
+              }
+              className="h-7 min-w-[170px] rounded border border-slate-300 bg-white px-2 text-sm text-slate-700 outline-none focus:border-blue-500"
+            >
+              {activeStatusOptions.map((status) => (
+                <option key={status.id} value={status.name}>
+                  {status.name}
+                </option>
+              ))}
+            </select>
+          );
+        },
+      },
+      {
+        field: 'priorityName',
+        headerName: 'Priority',
+        minWidth: 130,
+        filter: 'agTextColumnFilter',
+      },
+      {
+        field: 'assigneeNames',
+        headerName: 'Assignees',
+        minWidth: 180,
+        filter: 'agTextColumnFilter',
+      },
+      {
+        field: 'sprintName',
+        headerName: 'Sprint',
+        minWidth: 180,
+        filter: 'agTextColumnFilter',
+      },
+      {
+        field: 'dueDate',
+        headerName: 'Due date',
+        minWidth: 130,
+        filter: 'agDateColumnFilter',
+        filterParams: dateFilterParams,
+        valueFormatter: (params) => formatIsoDate(params.value as string | null),
+      },
+      {
+        field: 'remainingMinutes',
+        headerName: 'Remaining',
+        minWidth: 130,
+        filter: 'agNumberColumnFilter',
+        valueFormatter: (params) =>
+          formatRemainingMinutes(
+            typeof params.value === 'number' ? params.value : Number(params.value ?? NaN),
+          ),
+      },
+      {
+        field: 'updatedAt',
+        headerName: 'Updated',
+        minWidth: 130,
+        filter: 'agDateColumnFilter',
+        filterParams: dateFilterParams,
+        valueFormatter: (params) => formatUpdatedAt(params.value as string),
+      },
+    ],
+    [activeStatusOptions],
   );
 
   const handleTogglePinnedProject = (projectId: string) => {

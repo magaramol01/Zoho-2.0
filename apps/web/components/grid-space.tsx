@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   type BodyScrollEvent,
+  type CellValueChangedEvent,
   type ColDef,
   type FilterChangedEvent,
   type GridApi,
@@ -20,6 +21,7 @@ interface GridSpaceProps {
   rowData: GridRow[];
   columnDefs: ColDef<GridRow>[];
   filterStorageKey: string | null;
+  onCellValueChanged?: (event: CellValueChangedEvent<GridRow>) => void;
 }
 
 type HorizontalMetrics = {
@@ -46,6 +48,7 @@ export default function GridSpace({
   rowData,
   columnDefs,
   filterStorageKey,
+  onCellValueChanged,
 }: GridSpaceProps) {
   const [horizontalMetrics, setHorizontalMetrics] = useState<HorizontalMetrics>(
     initialHorizontalMetrics,
@@ -302,15 +305,18 @@ export default function GridSpace({
           rowData={rowData}
           columnDefs={columns}
           defaultColDef={defaultColDef}
+          getRowId={(params) => String(params.data.id)}
           theme="legacy"
           popupParent={popupParent}
           sideBar={sideBar}
           headerHeight={32}
           rowHeight={32}
           animateRows
+          singleClickEdit
           onGridReady={handleGridReady}
           onFilterChanged={handleFilterChanged}
           onBodyScroll={handleBodyScroll}
+          onCellValueChanged={onCellValueChanged}
           onFirstDataRendered={() => syncHorizontalMetrics()}
           onGridSizeChanged={() => syncHorizontalMetrics()}
         />

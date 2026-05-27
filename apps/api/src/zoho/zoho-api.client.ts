@@ -100,9 +100,22 @@ export class ZohoApiClient {
         body: options.body,
       });
       const contentType = response.headers.get("content-type") ?? "";
-      const parsedBody = contentType.includes("application/json") ? await response.json() : await response.text();
+      let parsedBody: unknown;
+
+      const rawText = await response.text();
+      if (contentType.includes("application/json")) {
+        try {
+          parsedBody = JSON.parse(rawText);
+        } catch (err) {
+          console.error(`[ZohoApiClient] Failed to parse JSON from ${url}. Status: ${response.status}. Raw response: ${rawText.substring(0, 500)}`);
+          throw new Error(`Invalid JSON response: ${err instanceof Error ? err.message : String(err)}`);
+        }
+      } else {
+        parsedBody = rawText;
+      }
 
       if (!response.ok) {
+        console.error(`[ZohoApiClient] Error response from ${url}. Status: ${response.status}. Body: ${rawText.substring(0, 500)}`);
         throw mapUpstreamError(response.status, parsedBody);
       }
 

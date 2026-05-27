@@ -101,19 +101,19 @@ export class TasksService {
     return rows.map((row) => this.toTaskRow(row));
   }
 
-  private async syncTasksIfStale(query: TaskQueryDto) {
+  async syncTasksIfStale(query: TaskQueryDto, force = false) {
     if (!(await this.zohoApiClient.canUseZoho())) {
       return;
     }
 
-    await this.syncService.syncMetadata();
+    await this.syncService.syncMetadata(force);
 
     const [latestRow] = await this.db.db
       .select()
       .from(taskCacheTable)
       .orderBy(desc(taskCacheTable.syncedAt))
       .limit(1);
-    if (latestRow && Date.now() - new Date(latestRow.syncedAt).getTime() < 45_000) {
+    if (!force && latestRow && Date.now() - new Date(latestRow.syncedAt).getTime() < 45_000) {
       return;
     }
 

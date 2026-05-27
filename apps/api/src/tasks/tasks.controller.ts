@@ -23,6 +23,12 @@ export class TasksController {
     return this.tasksService.bulkUpdate(body);
   }
 
+  @Post("sync")
+  async syncTasks(@Body() body: TaskQueryDto) {
+    await this.tasksService.syncTasksIfStale(body, true);
+    return { ok: true };
+  }
+
   @Post(":taskId/logs")
   addLog(@Param("taskId") taskId: string, @Body() body: CreateTaskLogDto) {
     return this.tasksService.addTaskLog(taskId, body);

@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ModuleRegistry,
   type BodyScrollEvent,
   type ColDef,
   type FilterChangedEvent,
@@ -11,12 +10,9 @@ import {
   type SideBarDef,
   type ValueFormatterParams,
 } from 'ag-grid-community';
-import { AllEnterpriseModule } from 'ag-grid-enterprise';
 import { AgGridReact } from 'ag-grid-react';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
-
-ModuleRegistry.registerModules([AllEnterpriseModule]);
 
 export type GridRow = Record<string, string | number | null>;
 
@@ -54,6 +50,7 @@ export default function GridSpace({
   const [horizontalMetrics, setHorizontalMetrics] = useState<HorizontalMetrics>(
     initialHorizontalMetrics,
   );
+  const [popupParent, setPopupParent] = useState<HTMLDivElement | null>(null);
 
   const gridRootRef = useRef<HTMLDivElement | null>(null);
   const scrollbarRef = useRef<HTMLDivElement | null>(null);
@@ -70,10 +67,6 @@ export default function GridSpace({
       editable: false,
       minWidth: 140,
       valueFormatter,
-      filterParams: {
-        buttons: ['apply', 'reset', 'clear', 'cancel'],
-        closeOnApply: true,
-      },
     }),
     [],
   );
@@ -294,16 +287,23 @@ export default function GridSpace({
     [filterStorageKey],
   );
 
+  const handleGridContainerRef = useCallback((node: HTMLDivElement | null) => {
+    gridRootRef.current = node;
+    setPopupParent(node);
+  }, []);
+
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-white">
       <div
-        ref={gridRootRef}
+        ref={handleGridContainerRef}
         className="ag-theme-alpine sheet-grid min-h-0 min-w-0 flex-1 overflow-hidden"
       >
         <AgGridReact<GridRow>
           rowData={rowData}
           columnDefs={columns}
           defaultColDef={defaultColDef}
+          theme="legacy"
+          popupParent={popupParent}
           sideBar={sideBar}
           headerHeight={32}
           rowHeight={32}

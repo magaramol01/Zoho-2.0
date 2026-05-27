@@ -86,8 +86,6 @@ function formatUpdatedAt(value: string) {
 }
 
 const dateFilterParams = {
-  buttons: ['apply', 'reset', 'clear', 'cancel'],
-  closeOnApply: true,
   comparator: (filterLocalDateAtMidnight: Date, cellValue: unknown) => {
     if (!cellValue || typeof cellValue !== 'string') {
       return -1;

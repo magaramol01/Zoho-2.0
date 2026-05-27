@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import './globals.css';
+import GridProvider from '@/components/ag-grid-provider';
 import { ThemeProvider } from '@/components/theme-provider';
 
 export default function RootLayout({
@@ -10,7 +11,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
-        <ThemeProvider>{children}</ThemeProvider>
+        <GridProvider>
+          <ThemeProvider>{children}</ThemeProvider>
+        </GridProvider>
       </body>
     </html>
   );

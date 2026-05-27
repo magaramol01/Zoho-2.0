@@ -473,7 +473,7 @@ export class TasksService {
           duration: toZohoLogDuration(body.durationMinutes),
           date: toZohoLogDateTime(body.date),
           notes: body.notes ?? "",
-          users: assigneeIds[0] ?? fallbackUser?.id ?? "",
+          users: body.userId ?? assigneeIds[0] ?? fallbackUser?.id ?? "",
           isbillable: toZohoBooleanFlag(body.billable),
         },
       });

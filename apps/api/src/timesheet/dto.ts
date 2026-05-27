@@ -31,6 +31,10 @@ export class CreateTaskLogDto {
   @IsString()
   notes?: string;
 
+  @IsOptional()
+  @IsString()
+  userId?: string;
+
   @IsBoolean()
   billable!: boolean;
 }
@@ -66,6 +70,10 @@ export class UpdateTimesheetLogDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @IsOptional()
+  @IsString()
+  userId?: string;
 
   @IsOptional()
   @IsBoolean()

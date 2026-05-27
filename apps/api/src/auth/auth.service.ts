@@ -1,11 +1,16 @@
 import { Injectable, UnauthorizedException } from "@nestjs/common";
 import type { Request, Response } from "express";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { decryptString, encryptString } from "../common/crypto";
 import { AppConfigService } from "../common/env";
 import { DatabaseService } from "../db/database.service";
-import { sessionsTable, usersTable, zohoConnectionsTable } from "../db/schema";
+import {
+  sessionsTable,
+  syncStateTable,
+  usersTable,
+  zohoConnectionsTable,
+} from "../db/schema";
 
 type CallbackPayload = {
   code?: string;
@@ -60,6 +65,8 @@ export class AuthService {
         displayName: body.display_name ?? user.displayName,
       },
     });
+
+    await this.db.db.delete(zohoConnectionsTable);
 
     await this.db.db.insert(zohoConnectionsTable).values({
       id: nanoid(),
@@ -137,5 +144,18 @@ export class AuthService {
       await this.db.db.delete(sessionsTable).where(eq(sessionsTable.sessionToken, token));
     }
     res.clearCookie(this.config.sessionCookieName, { path: "/" });
+  }
+
+  async disconnect(req: Request, res: Response) {
+    await this.logout(req, res);
+    await this.db.db.delete(zohoConnectionsTable);
+    await this.db.db.delete(syncStateTable).where(
+      inArray(syncStateTable.key, [
+        "current_zoho_user_id",
+        "current_zoho_user_name",
+        "current_zoho_internal_user_id",
+        "current_zoho_internal_user_name",
+      ]),
+    );
   }
 }

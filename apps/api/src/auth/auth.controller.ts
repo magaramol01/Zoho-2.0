@@ -31,4 +31,10 @@ export class AuthController {
     await this.authService.logout(req, res);
     return res.json({ ok: true });
   }
+
+  @Get("disconnect")
+  async disconnect(@Req() req: Request, @Res() res: Response) {
+    await this.authService.disconnect(req, res);
+    return res.redirect(this.authService.buildAuthorizationUrl());
+  }
 }

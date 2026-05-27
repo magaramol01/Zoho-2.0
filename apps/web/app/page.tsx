@@ -19,7 +19,9 @@ import {
 } from 'lucide-react';
 
 const PINNED_TABS_STORAGE_KEY = 'zoho-power-grid:pinned-project-tabs';
+const LOG_USER_STORAGE_KEY = 'zoho-power-grid:preferred-log-user-id';
 const LOCALHOST_LOGIN_URL = 'http://localhost:3001/api/auth/login';
+const LOCALHOST_DISCONNECT_URL = 'http://localhost:3001/api/auth/disconnect';
 
 type Project = {
   id: string;
@@ -43,6 +45,7 @@ type TaskItem = {
   statusId: string;
   statusName: string;
   priorityName: string | null;
+  assigneeIds: string[];
   assigneeNames: string[];
   dueDate: string | null;
   estimatedMinutes: number | null;
@@ -95,7 +98,13 @@ type BootstrapPayload = {
 type NewLogDraft = {
   date: string;
   durationClock: string;
+  userId: string;
   billable: boolean;
+};
+
+type AssigneeOption = {
+  id: string;
+  name: string;
 };
 
 function formatIsoDate(value: string | null) {
@@ -211,8 +220,10 @@ export default function Page() {
   const [newLogDraft, setNewLogDraft] = useState<NewLogDraft>({
     date: getTodayIso(),
     durationClock: '00:30',
+    userId: '',
     billable: true,
   });
+  const [preferredLogUserId, setPreferredLogUserId] = useState('');
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -234,6 +245,18 @@ export default function Page() {
       setPinnedProjectIds(parsedPinnedTabs.map((entry) => String(entry)));
     } catch {
       setPinnedProjectIds([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    try {
+      setPreferredLogUserId(window.localStorage.getItem(LOG_USER_STORAGE_KEY) ?? '');
+    } catch {
+      setPreferredLogUserId('');
     }
   }, []);
 
@@ -355,6 +378,14 @@ export default function Page() {
   }, [pinnedProjectIds]);
 
   useEffect(() => {
+    if (typeof window === 'undefined' || !preferredLogUserId) {
+      return;
+    }
+
+    window.localStorage.setItem(LOG_USER_STORAGE_KEY, preferredLogUserId);
+  }, [preferredLogUserId]);
+
+  useEffect(() => {
     if (!bootstrap?.authenticated || !activeProjectId) {
       setTasksLoading(false);
       return;
@@ -450,6 +481,17 @@ export default function Page() {
         ? activeProjectTasks.find((task) => task.id === logPanelTaskId) ?? null
         : null,
     [activeProjectTasks, logPanelTaskId],
+  );
+
+  const selectedTaskAssignees = useMemo<AssigneeOption[]>(
+    () =>
+      selectedTask
+        ? selectedTask.assigneeIds.map((id, index) => ({
+            id,
+            name: selectedTask.assigneeNames[index] ?? id,
+          }))
+        : [],
+    [selectedTask],
   );
 
   const activeStatusOptions = useMemo(() => {
@@ -589,15 +631,23 @@ export default function Page() {
 
   const openLogPanel = useCallback(
     (taskId: string) => {
+      const task = activeProjectTasks.find((entry) => entry.id === taskId);
+      const defaultUserId = task
+        ? task.assigneeIds.includes(preferredLogUserId)
+          ? preferredLogUserId
+          : task.assigneeIds[task.assigneeIds.length - 1] ?? task.assigneeIds[0] ?? ''
+        : preferredLogUserId;
+
       setLogPanelTaskId(taskId);
       setNewLogDraft({
         date: getTodayIso(),
         durationClock: '00:30',
+        userId: defaultUserId,
         billable: true,
       });
       void fetchTaskLogs(taskId);
     },
-    [fetchTaskLogs],
+    [activeProjectTasks, fetchTaskLogs, preferredLogUserId],
   );
 
   const closeLogPanel = useCallback(() => {
@@ -767,6 +817,7 @@ export default function Page() {
         body: JSON.stringify({
           date: newLogDraft.date,
           durationMinutes,
+          userId: newLogDraft.userId || undefined,
           billable: newLogDraft.billable,
           notes: '',
         }),
@@ -783,8 +834,12 @@ export default function Page() {
       setNewLogDraft({
         date: getTodayIso(),
         durationClock: '00:30',
+        userId: newLogDraft.userId,
         billable: true,
       });
+      if (newLogDraft.userId) {
+        setPreferredLogUserId(newLogDraft.userId);
+      }
       await fetchTaskLogs(selectedTask.id);
     } catch (error) {
       setLogPanelError(
@@ -1041,6 +1096,12 @@ export default function Page() {
           </div>
 
           <div className="flex items-center gap-4">
+            <a
+              href={LOCALHOST_DISCONNECT_URL}
+              className="hidden rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-400 hover:text-slate-900 md:inline-flex"
+            >
+              Reconnect Zoho
+            </a>
             <div className="hidden text-right md:block">
               <div className="text-xs font-medium uppercase tracking-[0.2em] text-gray-400">
                 Connected user
@@ -1122,6 +1183,7 @@ export default function Page() {
           onLogFieldChange={handleLogFieldChange}
           onSaveLog={handleSaveLog}
           savingLogIds={savingLogIds}
+          assigneeOptions={selectedTaskAssignees}
           newLogDraft={newLogDraft}
           setNewLogDraft={setNewLogDraft}
           onAddLog={() => void handleAddLog()}
@@ -1142,6 +1204,7 @@ function TaskLogDrawer({
   onLogFieldChange,
   onSaveLog,
   savingLogIds,
+  assigneeOptions,
   newLogDraft,
   setNewLogDraft,
   onAddLog,
@@ -1160,6 +1223,7 @@ function TaskLogDrawer({
   ) => void;
   onSaveLog: (logId: string) => void;
   savingLogIds: Record<string, boolean>;
+  assigneeOptions: AssigneeOption[];
   newLogDraft: NewLogDraft;
   setNewLogDraft: React.Dispatch<React.SetStateAction<NewLogDraft>>;
   onAddLog: () => void;
@@ -1214,7 +1278,7 @@ function TaskLogDrawer({
         </div>
 
         <div className="border-b border-slate-200 bg-slate-50 px-6 py-4">
-          <div className="grid gap-3 md:grid-cols-[1fr_140px_100px_auto]">
+          <div className="grid gap-3 md:grid-cols-[1fr_140px_1fr_100px_auto]">
             <label className="flex flex-col gap-2 text-sm text-slate-600">
               <span className="font-medium">Date</span>
               <input
@@ -1240,6 +1304,25 @@ function TaskLogDrawer({
                 }
                 className="h-10 rounded-xl border border-slate-300 bg-white px-3 text-slate-800 outline-none focus:border-blue-500"
               />
+            </label>
+            <label className="flex flex-col gap-2 text-sm text-slate-600">
+              <span className="font-medium">Log as</span>
+              <select
+                value={newLogDraft.userId}
+                onChange={(event) =>
+                  setNewLogDraft((current) => ({
+                    ...current,
+                    userId: event.target.value,
+                  }))
+                }
+                className="h-10 rounded-xl border border-slate-300 bg-white px-3 text-slate-800 outline-none focus:border-blue-500"
+              >
+                {assigneeOptions.map((assignee) => (
+                  <option key={assignee.id} value={assignee.id}>
+                    {assignee.name}
+                  </option>
+                ))}
+              </select>
             </label>
             <label className="flex items-end gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700">
               <input

@@ -1,0 +1,4310 @@
+{
+  "info": {
+    "_postman_id": "c5443f98-dc7a-4c37-b8fd-5ccdbfc62500",
+    "name": "Zoho Sprints - API Collection",
+    "description": "Zoho Sprints API is REST based and it uses the Oauth 2.0 protocol for authentication. This document helps you to fetch and modify data in Sprints with our API. It uses HTTP response codes to indicate API errors. These APIs facilitate integration with other Zoho applications and third-party tools with ease. The responses are JSON based.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "54553525",
+    "_collection_link": "https://go.postman.co/collection/54553525-c5443f98-dc7a-4c37-b8fd-5ccdbfc62500?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Workspaces",
+      "item": [
+        {
+          "name": "Get all workspaces",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/teams/",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "teams",
+                ""
+              ]
+            },
+            "description": "Fetch the list of all the workspaces in which you are associated."
+          },
+          "response": []
+        },
+        {
+          "name": "Get workspace settings",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/teams/{{teamId}}/settings/",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "teams",
+                "{{teamId}}",
+                "settings",
+                ""
+              ]
+            },
+            "description": "Fetch the settings of a specific workspace."
+          },
+          "response": []
+        },
+        {
+          "name": "Get all link types",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/linktype/?action=data",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "linktype",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "data"
+                }
+              ]
+            },
+            "description": "Fetch the default and custom link types of a specific workspace."
+          },
+          "response": []
+        },
+        {
+          "name": "Get tags",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/tags/?action=data&index=1&range=250&tagIdarr={{tagIdArr}}&searchvalue={{searchValue}}",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "tags",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "data",
+                  "type": "text"
+                },
+                {
+                  "key": "index",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "range",
+                  "value": "250",
+                  "type": "text"
+                },
+                {
+                  "key": "tagIdarr",
+                  "value": "{{tagIdArr}}",
+                  "type": "text"
+                },
+                {
+                  "key": "searchvalue",
+                  "value": "{{searchValue}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "description": "Fetch all the custom tags in your workspace."
+          },
+          "response": []
+        },
+        {
+          "name": "Get global log hours",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/portfolio/{{viewType}}/modules/{{moduleId}}/view/{{viewNumber}}/?action=data&index=1&range=50",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "portfolio",
+                "{{viewType}}",
+                "modules",
+                "{{moduleId}}",
+                "view",
+                "{{viewNumber}}",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "data"
+                },
+                {
+                  "key": "index",
+                  "value": "1"
+                },
+                {
+                  "key": "range",
+                  "value": "50"
+                }
+              ]
+            },
+            "description": "Fetch all the details of the log hours across projects."
+          },
+          "response": []
+        },
+        {
+          "name": "Add company holidays",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/settings/holidays/?date={{date}}&name={{holiday}}",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "settings",
+                "holidays",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "{{date}}",
+                  "type": "text"
+                },
+                {
+                  "key": "name",
+                  "value": "{{holiday}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "description": "Configure holidays for your workspace."
+          },
+          "response": []
+        },
+        {
+          "name": "Add link type",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/linktype/?action=addlinktype&linktypename={{linkName}}&revlinktypename={{backlinkName}}",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "linktype",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "addlinktype",
+                  "type": "text"
+                },
+                {
+                  "key": "linktypename",
+                  "value": "{{linkName}}",
+                  "type": "text"
+                },
+                {
+                  "key": "revlinktypename",
+                  "value": "{{backlinkName}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "description": "Define the link and back link names and create link types for your workspace."
+          },
+          "response": []
+        },
+        {
+          "name": "Add custom tag",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/tag/?action=createtag&name={{tagName}}&color={{colorCode}}",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "tag",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "createtag",
+                  "type": "text"
+                },
+                {
+                  "key": "name",
+                  "value": "{{tagName}}",
+                  "type": "text"
+                },
+                {
+                  "key": "color",
+                  "value": "{{colorCode}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "description": "Create custom tags and categorize a particular group of work items in your backlog or sprint."
+          },
+          "response": []
+        },
+        {
+          "name": "Update link type",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/linktype/{{linktypeId}}/?linktypename={{linkName}}&revlinktypename={{backlinkName}}",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "linktype",
+                "{{linktypeId}}",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "linktypename",
+                  "value": "{{linkName}}",
+                  "type": "text"
+                },
+                {
+                  "key": "revlinktypename",
+                  "value": "{{backlinkName}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "description": "Modify the link and back link names to update the custom link type."
+          },
+          "response": []
+        },
+        {
+          "name": "Update custom tag",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/tag/{{tagId}}/?action=edittag&name={{tagName}}&color={{colorCode}}",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "tag",
+                "{{tagId}}",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "edittag",
+                  "type": "text"
+                },
+                {
+                  "key": "name",
+                  "value": "{{tagName}}",
+                  "type": "text"
+                },
+                {
+                  "key": "color",
+                  "value": "{{colorCode}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "description": "Modify the tag name and color."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete link type",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/linktype/{{linktypeId}}/",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "linktype",
+                "{{linktypeId}}",
+                ""
+              ]
+            },
+            "description": "Delete the custom link type created in your workspace."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete custom tag",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/tag/{{tagId}}/?Authorization=Zoho-oauthtoken {{User.Auth_Token}}",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "tag",
+                "{{tagId}}",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "Authorization",
+                  "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "description": "Delete the custom tag created in your workspace."
+          },
+          "response": []
+        }
+      ],
+      "description": "In Zoho Sprints, your business runs on an entity called a \"Workspace\". If you run multiple firms, you create multiple workspaces in Sprints and get them going."
+    },
+    {
+      "name": "Projects",
+      "item": [
+        {
+          "name": "Get projects",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/?action=data&index=1&range=25&projectstatus={{projectStatus}}&viewby={{viewBy}}&searchvalue={{searchValue}}",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "data"
+                },
+                {
+                  "key": "index",
+                  "value": "1"
+                },
+                {
+                  "key": "range",
+                  "value": "25"
+                },
+                {
+                  "key": "projectstatus",
+                  "value": "{{projectStatus}}"
+                },
+                {
+                  "key": "viewby",
+                  "value": "{{viewBy}}"
+                },
+                {
+                  "key": "searchvalue",
+                  "value": "{{searchValue}}"
+                }
+              ]
+            },
+            "description": "Fetch the list of projects that are associated with a specific workspace.\n\nNote: The projects in which only you are associated will be listed."
+          },
+          "response": []
+        },
+        {
+          "name": "Get project groups",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projectgroups/?action=data&index=1&range=25",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projectgroups",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "data",
+                  "type": "text"
+                },
+                {
+                  "key": "index",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "range",
+                  "value": "25",
+                  "type": "text"
+                }
+              ]
+            },
+            "description": "Fetch all the project groups available in a workspace."
+          },
+          "response": []
+        },
+        {
+          "name": "Get project backlog",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/?action=getbacklog",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "getbacklog",
+                  "type": "text"
+                }
+              ]
+            },
+            "description": "Fetch the project backlog of a specific project."
+          },
+          "response": []
+        },
+        {
+          "name": "Get project details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/?action=details",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "details",
+                  "type": "text"
+                }
+              ]
+            },
+            "description": "Fetch the details of a specific project."
+          },
+          "response": []
+        },
+        {
+          "name": "Get project priorities",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/priority/?action=data&index=1&range=25",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "priority",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "data",
+                  "type": "text"
+                },
+                {
+                  "key": "index",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "range",
+                  "value": "25",
+                  "type": "text"
+                }
+              ]
+            },
+            "description": "Fetch the priorities of a specific project."
+          },
+          "response": []
+        },
+        {
+          "name": "Create project",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/?name={{projectName}}&desc={{desc}}&owner={{ownerId}}&projgroup={{ProjgroupId}}&projectlayoutid={{projectlayoutId}}&itemlayoutid={{itemlayoutId}}&epiclayoutid={{epiclayoutId}}&meetinglayoutid={{meetinglayoutId}}&prefix={{prefix}}&estimationtype={{estimationType}}&startdate={{startDate}}&enddate={{endDate}}&pointsarr={{pointsArr}}&clonefrom={{cloneFromProjectId}}",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "name",
+                  "value": "{{projectName}}"
+                },
+                {
+                  "key": "desc",
+                  "value": "{{desc}}"
+                },
+                {
+                  "key": "owner",
+                  "value": "{{ownerId}}"
+                },
+                {
+                  "key": "projgroup",
+                  "value": "{{ProjgroupId}}"
+                },
+                {
+                  "key": "projectlayoutid",
+                  "value": "{{projectlayoutId}}"
+                },
+                {
+                  "key": "itemlayoutid",
+                  "value": "{{itemlayoutId}}"
+                },
+                {
+                  "key": "epiclayoutid",
+                  "value": "{{epiclayoutId}}"
+                },
+                {
+                  "key": "meetinglayoutid",
+                  "value": "{{meetinglayoutId}}"
+                },
+                {
+                  "key": "prefix",
+                  "value": "{{prefix}}"
+                },
+                {
+                  "key": "estimationtype",
+                  "value": "{{estimationType}}"
+                },
+                {
+                  "key": "startdate",
+                  "value": "{{startDate}}"
+                },
+                {
+                  "key": "enddate",
+                  "value": "{{endDate}}"
+                },
+                {
+                  "key": "pointsarr",
+                  "value": "{{pointsArr}}"
+                },
+                {
+                  "key": "clonefrom",
+                  "value": "{{cloneFromProjectId}}"
+                }
+              ]
+            },
+            "description": "Create a new project."
+          },
+          "response": []
+        },
+        {
+          "name": "Update project",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/?name={{projectName}}&status={{status}}&projgroup={{projgroupId}}&owner={{ownerId}}&startdate={{startDate}}&enddate={{endDate}}&projectlayoutid={{projectLayoutId}}",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "name",
+                  "value": "{{projectName}}"
+                },
+                {
+                  "key": "status",
+                  "value": "{{status}}"
+                },
+                {
+                  "key": "projgroup",
+                  "value": "{{projgroupId}}"
+                },
+                {
+                  "key": "owner",
+                  "value": "{{ownerId}}"
+                },
+                {
+                  "key": "startdate",
+                  "value": "{{startDate}}"
+                },
+                {
+                  "key": "enddate",
+                  "value": "{{endDate}}"
+                },
+                {
+                  "key": "projectlayoutid",
+                  "value": "{{projectLayoutId}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "description": "Update a specific project."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete project",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                ""
+              ]
+            },
+            "description": "Delete a specific project."
+          },
+          "response": []
+        }
+      ],
+      "description": "Any accomplishable piece of work can be termed as a project in Zoho Sprints. Every workspace can have a set of projects. Typically, a project is a subset of a workspace."
+    },
+    {
+      "name": "Sprints",
+      "item": [
+        {
+          "name": "Get sprints",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/sprints/?action=data&index=1&range=50&type={{sprintTypeArr}}&searchvalue={{searchValue}}",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "sprints",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "data"
+                },
+                {
+                  "key": "index",
+                  "value": "1"
+                },
+                {
+                  "key": "range",
+                  "value": "50"
+                },
+                {
+                  "key": "type",
+                  "value": "{{sprintTypeArr}}"
+                },
+                {
+                  "key": "searchvalue",
+                  "value": "{{searchValue}}"
+                }
+              ]
+            },
+            "description": "Fetch the list of all the sprints that are associated with a specific project.\n\nNote: The sprints in which only you are associated will be listed. If you don't pass 'type' param, only the upcoming sprints would be listed."
+          },
+          "response": []
+        },
+        {
+          "name": "Get sprint details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/sprints/{{sprintId}}/?action=details",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "sprints",
+                "{{sprintId}}",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "details"
+                }
+              ]
+            },
+            "description": "Fetch the details of a specific sprint."
+          },
+          "response": []
+        },
+        {
+          "name": "Get sprint comments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectid}}/modules/{{moduleId}}/entity/{{sprintId}}/notes/?action=data&index=1&range=10",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectid}}",
+                "modules",
+                "{{moduleId}}",
+                "entity",
+                "{{sprintId}}",
+                "notes",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "data",
+                  "type": "text"
+                },
+                {
+                  "key": "index",
+                  "value": "1"
+                },
+                {
+                  "key": "range",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Fetch the comments of a specific sprint."
+          },
+          "response": []
+        },
+        {
+          "name": "Create sprint",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/sprints/?name={{sprintName}}&description={{desc}}&startdate={{startDate}}&enddate={{endDate}}&duration={{duration}}&scrummaster={{scrumMasterId}}&users={{userIdArr}}",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "sprints",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "name",
+                  "value": "{{sprintName}}"
+                },
+                {
+                  "key": "description",
+                  "value": "{{desc}}"
+                },
+                {
+                  "key": "startdate",
+                  "value": "{{startDate}}"
+                },
+                {
+                  "key": "enddate",
+                  "value": "{{endDate}}"
+                },
+                {
+                  "key": "duration",
+                  "value": "{{duration}}"
+                },
+                {
+                  "key": "scrummaster",
+                  "value": "{{scrumMasterId}}"
+                },
+                {
+                  "key": "users",
+                  "value": "{{userIdArr}}"
+                }
+              ]
+            },
+            "description": "Add a new sprint in your project."
+          },
+          "response": []
+        },
+        {
+          "name": "Add sprint comment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/modules/{{moduleId}}/entity/{{sprintId}}/notes/?action=addnotes&name={{sprintNote}}",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "modules",
+                "{{moduleId}}",
+                "entity",
+                "{{sprintId}}",
+                "notes",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "addnotes"
+                },
+                {
+                  "key": "name",
+                  "value": "{{sprintNote}}"
+                }
+              ]
+            },
+            "description": "Comment on a specific sprint."
+          },
+          "response": []
+        },
+        {
+          "name": "Update sprint",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/sprints/{{sprintId}}/?name={{sprintName}}&description={{desc}}&startdate={{startDate}}&enddate={{endDate}}&duration={{duration}}&scrummaster={{scrumMasterId}}",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "sprints",
+                "{{sprintId}}",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "name",
+                  "value": "{{sprintName}}"
+                },
+                {
+                  "key": "description",
+                  "value": "{{desc}}"
+                },
+                {
+                  "key": "startdate",
+                  "value": "{{startDate}}"
+                },
+                {
+                  "key": "enddate",
+                  "value": "{{endDate}}"
+                },
+                {
+                  "key": "duration",
+                  "value": "{{duration}}"
+                },
+                {
+                  "key": "scrummaster",
+                  "value": "{{scrumMasterId}}"
+                }
+              ]
+            },
+            "description": "Update a specific sprint."
+          },
+          "response": []
+        },
+        {
+          "name": "Update sprint comment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/modules/{{moduleId}}/entity/{{sprintId}}/notes/{{notesId}}/?action=updatenotes&name={{sprintNote}}",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "modules",
+                "{{moduleId}}",
+                "entity",
+                "{{sprintId}}",
+                "notes",
+                "{{notesId}}",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "updatenotes"
+                },
+                {
+                  "key": "name",
+                  "value": "{{sprintNote}}"
+                }
+              ]
+            },
+            "description": "Modify a specific sprint comment"
+          },
+          "response": []
+        },
+        {
+          "name": "Start sprint",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/sprints/{{sprintId}}/start/",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "sprints",
+                "{{sprintId}}",
+                "start",
+                ""
+              ]
+            },
+            "description": "Start a specific sprint."
+          },
+          "response": []
+        },
+        {
+          "name": "Complete sprint",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/sprints/{{sprintId}}/complete/?action=complete",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "sprints",
+                "{{sprintId}}",
+                "complete",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "complete"
+                }
+              ]
+            },
+            "description": "To complete a sprint using this API, all the items in it must be in either of the following states:\n\n1) Updated to \"Closed\" status.\n\n2) Moved to the backlog or another sprint."
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel sprint",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/sprints/{{sprintId}}/cancel/?action=cancel",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "sprints",
+                "{{sprintId}}",
+                "cancel",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "cancel"
+                }
+              ]
+            },
+            "description": "To cancel a sprint using this API, all the items in it must be in either of the following states:\n\n1) Updated to \"Closed\" status\n\n2) Moved to the backlog or another sprint"
+          },
+          "response": []
+        },
+        {
+          "name": "Replan sprint",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/sprints/{{sprintId}}/replan/",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "sprints",
+                "{{sprintId}}",
+                "replan",
+                ""
+              ]
+            },
+            "description": "Replan a specific sprint."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete sprint",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/sprints/{{sprintId}}/",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "sprints",
+                "{{sprintId}}",
+                ""
+              ]
+            },
+            "description": "Delete a specific sprint."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete sprint comment",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/modules/{{moduleId}}//entity{{sprintId}}/notes/{{noteId}}/",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "modules",
+                "{{moduleId}}",
+                "",
+                "entity{{sprintId}}",
+                "notes",
+                "{{noteId}}",
+                ""
+              ]
+            },
+            "description": "Delete a specific sprint comment."
+          },
+          "response": []
+        }
+      ],
+      "description": "Break down a project into smaller units called \"sprints\". Typically, a sprint lasts for 2 - 4 weeks."
+    },
+    {
+      "name": "Items",
+      "item": [
+        {
+          "name": "Get items",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/sprints/{{sprintId}}/item/?action=data&index=1&range=25&subitem=true&searchby={{searchBy}}&searchvalue={{searchValue}}",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "sprints",
+                "{{sprintId}}",
+                "item",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "data"
+                },
+                {
+                  "key": "index",
+                  "value": "1"
+                },
+                {
+                  "key": "range",
+                  "value": "25"
+                },
+                {
+                  "key": "subitem",
+                  "value": "true",
+                  "type": "text"
+                },
+                {
+                  "key": "searchby",
+                  "value": "{{searchBy}}",
+                  "type": "text"
+                },
+                {
+                  "key": "searchvalue",
+                  "value": "{{searchValue}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "description": "Fetch the list of all the items associated with a sprint."
+          },
+          "response": []
+        },
+        {
+          "name": "Get item details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/sprints/{{sprintId}}/item/{{itemId}}/?action=details",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "sprints",
+                "{{sprintId}}",
+                "item",
+                "{{itemId}}",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "details"
+                }
+              ]
+            },
+            "description": "Fetch the details of a specific item."
+          },
+          "response": []
+        },
+        {
+          "name": "Get item activity",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/sprints/{{sprintId}}/item/{{itemId}}/activity/?index=1&range=50",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "sprints",
+                "{{sprintId}}",
+                "item",
+                "{{itemId}}",
+                "activity",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "index",
+                  "value": "1"
+                },
+                {
+                  "key": "range",
+                  "value": "50"
+                }
+              ]
+            },
+            "description": "Fetch the activities of a specific item."
+          },
+          "response": []
+        },
+        {
+          "name": "Get multiple item details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/item/?action=multipledetails&itemidarr={{itemIdArr}}&itemnoarr={{itemNoArr}}",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "item",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "multipledetails"
+                },
+                {
+                  "key": "itemidarr",
+                  "value": "{{itemIdArr}}"
+                },
+                {
+                  "key": "itemnoarr",
+                  "value": "{{itemNoArr}}"
+                }
+              ]
+            },
+            "description": "Fetch the details of multiple items in a project."
+          },
+          "response": []
+        },
+        {
+          "name": "Get item comments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/modules/{{moduleId}}/entity/{{itemId}}/notes/?action=data&index=1&range=10",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "modules",
+                "{{moduleId}}",
+                "entity",
+                "{{itemId}}",
+                "notes",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "data",
+                  "type": "text"
+                },
+                {
+                  "key": "index",
+                  "value": "1"
+                },
+                {
+                  "key": "range",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Fetch the comments of a specific item."
+          },
+          "response": []
+        },
+        {
+          "name": "Get linked items",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/sprints/{{sprintId}}/item/{{itemId}}/linkitem/?action=data",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "sprints",
+                "{{sprintId}}",
+                "item",
+                "{{itemId}}",
+                "linkitem",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "data"
+                }
+              ]
+            },
+            "description": "Fetch the items linked with a specific item."
+          },
+          "response": []
+        },
+        {
+          "name": "Get item timer",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/sprints/{{sprintId}}/timer/?action=itemtimer&itemIdArr={{itemIdArr}}",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "sprints",
+                "{{sprintId}}",
+                "timer",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "itemtimer"
+                },
+                {
+                  "key": "itemIdArr",
+                  "value": "{{itemIdArr}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "description": "Fetch the timer details for items."
+          },
+          "response": []
+        },
+        {
+          "name": "Get tags associated with item",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/sprints/{{sprintId}}/item/{{itemId}}/tags/?action=itemassociatedtagIds",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "sprints",
+                "{{sprintId}}",
+                "item",
+                "{{itemId}}",
+                "tags",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "itemassociatedtagIds"
+                }
+              ]
+            },
+            "description": "Fetch all the tags that are associated with the item."
+          },
+          "response": []
+        },
+        {
+          "name": "Get item followers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/sprints/{{sprintId}}/item/{{itemId}}/followers/?action=getfollowers",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "sprints",
+                "{{sprintId}}",
+                "item",
+                "{{itemId}}",
+                "followers",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "getfollowers"
+                }
+              ]
+            },
+            "description": "Fetch all the users currently following the item."
+          },
+          "response": []
+        },
+        {
+          "name": "Get item reminder",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/sprints/{{sprintId}}/item/{{itemId}}/reminder/?action=data&index=1&range=10&filter={{filterObj}}",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "sprints",
+                "{{sprintId}}",
+                "item",
+                "{{itemId}}",
+                "reminder",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "data"
+                },
+                {
+                  "key": "index",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "range",
+                  "value": "10",
+                  "type": "text"
+                },
+                {
+                  "key": "filter",
+                  "value": "{{filterObj}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "description": "Fetch the reminder set for an item."
+          },
+          "response": []
+        },
+        {
+          "name": "Create item",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/sprints/{{sprintId}}/item/?name={{itemName}}&projitemtypeid={{projItemTypeId}}&projpriorityid={{projPriorityId}}&epicid={{epicId}}&users={{userIdArr}}&description={{desc}}&point={{point}}&duration={{duration}}&startdate={{startDate}}&enddate={{endDate}}",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "sprints",
+                "{{sprintId}}",
+                "item",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "name",
+                  "value": "{{itemName}}"
+                },
+                {
+                  "key": "projitemtypeid",
+                  "value": "{{projItemTypeId}}"
+                },
+                {
+                  "key": "projpriorityid",
+                  "value": "{{projPriorityId}}"
+                },
+                {
+                  "key": "epicid",
+                  "value": "{{epicId}}"
+                },
+                {
+                  "key": "users",
+                  "value": "{{userIdArr}}"
+                },
+                {
+                  "key": "description",
+                  "value": "{{desc}}"
+                },
+                {
+                  "key": "point",
+                  "value": "{{point}}"
+                },
+                {
+                  "key": "duration",
+                  "value": "{{duration}}"
+                },
+                {
+                  "key": "startdate",
+                  "value": "{{startDate}}"
+                },
+                {
+                  "key": "enddate",
+                  "value": "{{endDate}}"
+                }
+              ]
+            },
+            "description": "Add an item to a specific sprint or the backlog."
+          },
+          "response": []
+        },
+        {
+          "name": "Create subitem",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/sprints/{{sprintId}}/item/{{itemId}}/subitem/?name={{itemName}}&projitemtypeid={{projItemTypeId}}&projpriorityid={{projPriorityId}}&epicid={{epicId}}&users={{userIdArr}}&description={{desc}}&point={{point}}&duration={{duration}}&startdate={{startDate}}&enddate={{endDate}}",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "sprints",
+                "{{sprintId}}",
+                "item",
+                "{{itemId}}",
+                "subitem",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "name",
+                  "value": "{{itemName}}"
+                },
+                {
+                  "key": "projitemtypeid",
+                  "value": "{{projItemTypeId}}"
+                },
+                {
+                  "key": "projpriorityid",
+                  "value": "{{projPriorityId}}"
+                },
+                {
+                  "key": "epicid",
+                  "value": "{{epicId}}"
+                },
+                {
+                  "key": "users",
+                  "value": "{{userIdArr}}"
+                },
+                {
+                  "key": "description",
+                  "value": "{{desc}}"
+                },
+                {
+                  "key": "point",
+                  "value": "{{point}}"
+                },
+                {
+                  "key": "duration",
+                  "value": "{{duration}}"
+                },
+                {
+                  "key": "startdate",
+                  "value": "{{startDate}}"
+                },
+                {
+                  "key": "enddate",
+                  "value": "{{endDate}}"
+                }
+              ]
+            },
+            "description": "Add sub item to a specific item in sprint or the backlog."
+          },
+          "response": []
+        },
+        {
+          "name": "Add item attachments",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "action",
+                  "value": "attachment",
+                  "description": "Mandatory",
+                  "type": "text"
+                },
+                {
+                  "key": "uploadfile",
+                  "description": "Mandatory",
+                  "type": "file",
+                  "value": null
+                }
+              ]
+            },
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/sprints/{{sprintId}}/item/{{itemId}}/attachments/",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "sprints",
+                "{{sprintId}}",
+                "item",
+                "{{itemId}}",
+                "attachments",
+                ""
+              ]
+            },
+            "description": "Add attachments to a specific item."
+          },
+          "response": []
+        },
+        {
+          "name": "Add item comment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/modules/{{moduleId}}/entity/{{itemId}}/notes/?addnotes=addnotes&name={{Comment}}",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "modules",
+                "{{moduleId}}",
+                "entity",
+                "{{itemId}}",
+                "notes",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "addnotes",
+                  "value": "addnotes",
+                  "type": "text"
+                },
+                {
+                  "key": "name",
+                  "value": "{{Comment}}"
+                }
+              ]
+            },
+            "description": "Comment on a specific item."
+          },
+          "response": []
+        },
+        {
+          "name": "Add item reminder",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/sprints/{{sprintId}}/item/{{itemId}}/reminder/?itemreminder={{itemReminderObj}}",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "sprints",
+                "{{sprintId}}",
+                "item",
+                "{{itemId}}",
+                "reminder",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "itemreminder",
+                  "value": "{{itemReminderObj}}"
+                }
+              ]
+            },
+            "description": "Set reminder for an item."
+          },
+          "response": []
+        },
+        {
+          "name": "Clone item",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/sprints/{{sprintId}}/item/{{itemId}}/?action=clone&needclitems=false",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "sprints",
+                "{{sprintId}}",
+                "item",
+                "{{itemId}}",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "clone",
+                  "type": "text"
+                },
+                {
+                  "key": "needclitems",
+                  "value": "false"
+                }
+              ]
+            },
+            "description": "Clone a specific item."
+          },
+          "response": []
+        },
+        {
+          "name": "Link items",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/sprints/{{sprintId}}/item/{{itemId}}/linkitem/?action=linkitems&linkitemobj={{linkObj}}&linktosprintid={{sprintId}}&linktoprojectid={{projectId}}&linktypeid={{linktypeId}}",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "sprints",
+                "{{sprintId}}",
+                "item",
+                "{{itemId}}",
+                "linkitem",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "linkitems"
+                },
+                {
+                  "key": "linkitemobj",
+                  "value": "{{linkObj}}"
+                },
+                {
+                  "key": "linktosprintid",
+                  "value": "{{sprintId}}"
+                },
+                {
+                  "key": "linktoprojectid",
+                  "value": "{{projectId}}"
+                },
+                {
+                  "key": "linktypeid",
+                  "value": "{{linktypeId}}"
+                }
+              ]
+            },
+            "description": "Link work items with similar set of goals using the default or custom link types."
+          },
+          "response": []
+        },
+        {
+          "name": "Update item",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/sprints/{{sprintId}}/item/{{itemId}}/?name={{itemName}}&projitemtypeid={{projItemTypeId}}&projpriorityid={{projPriorityId}}&statusid={{statusId}}&epicid={{epicId}}&description={{desc}}&point={{point}}&startdate={{startDate}}&enddate={{endDate}}&newusers={{userArr}}&delusers={{delUserArr}}",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "sprints",
+                "{{sprintId}}",
+                "item",
+                "{{itemId}}",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "name",
+                  "value": "{{itemName}}"
+                },
+                {
+                  "key": "projitemtypeid",
+                  "value": "{{projItemTypeId}}"
+                },
+                {
+                  "key": "projpriorityid",
+                  "value": "{{projPriorityId}}"
+                },
+                {
+                  "key": "statusid",
+                  "value": "{{statusId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "epicid",
+                  "value": "{{epicId}}"
+                },
+                {
+                  "key": "description",
+                  "value": "{{desc}}"
+                },
+                {
+                  "key": "point",
+                  "value": "{{point}}"
+                },
+                {
+                  "key": "startdate",
+                  "value": "{{startDate}}"
+                },
+                {
+                  "key": "enddate",
+                  "value": "{{endDate}}"
+                },
+                {
+                  "key": "newusers",
+                  "value": "{{userArr}}"
+                },
+                {
+                  "key": "delusers",
+                  "value": "{{delUserArr}}"
+                }
+              ]
+            },
+            "description": "Update a specific item."
+          },
+          "response": []
+        },
+        {
+          "name": "Update item comment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/modules/{{moduleId}}/entity/{{itemId}}/notes/{{noteId}}/?action=updatenotes&name={{comment}}",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "modules",
+                "{{moduleId}}",
+                "entity",
+                "{{itemId}}",
+                "notes",
+                "{{noteId}}",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "updatenotes",
+                  "type": "text"
+                },
+                {
+                  "key": "name",
+                  "value": "{{comment}}"
+                }
+              ]
+            },
+            "description": "Modify an item comment."
+          },
+          "response": []
+        },
+        {
+          "name": "Update item reminder",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/sprints/{{sprintId}}/item/{{itemId}}/reminder/{{reminderId}}/?itemreminder={{reminderObj}}",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "sprints",
+                "{{sprintId}}",
+                "item",
+                "{{itemId}}",
+                "reminder",
+                "{{reminderId}}",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "itemreminder",
+                  "value": "{{reminderObj}}"
+                }
+              ]
+            },
+            "description": "Update the reminder set for an item."
+          },
+          "response": []
+        },
+        {
+          "name": "Move item",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/sprints/{{sprintId}}/bulkupdate/?action=moveitem&itemidarr={{itemIdArr}}&tosprintid={{sprintId}}&toprojectid={{projectId}}",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "sprints",
+                "{{sprintId}}",
+                "bulkupdate",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "moveitem"
+                },
+                {
+                  "key": "itemidarr",
+                  "value": "{{itemIdArr}}"
+                },
+                {
+                  "key": "tosprintid",
+                  "value": "{{sprintId}}"
+                },
+                {
+                  "key": "toprojectid",
+                  "value": "{{projectId}}"
+                }
+              ]
+            },
+            "description": "Move one or more items across projects."
+          },
+          "response": []
+        },
+        {
+          "name": "Update items linked",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/sprints/{{sprintId}}/item/{{itemId}}/linkitem/?action=editlinkitem&destitemid={{destitemId}}&srcitemid={{srcItemId}}&linktosprintid={{sprintId}}&linktoprojectid={{projectId}}&linktypeid={{linktypeId}}&oldlinktypeid={{linktypeId}}",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "sprints",
+                "{{sprintId}}",
+                "item",
+                "{{itemId}}",
+                "linkitem",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "editlinkitem"
+                },
+                {
+                  "key": "destitemid",
+                  "value": "{{destitemId}}"
+                },
+                {
+                  "key": "srcitemid",
+                  "value": "{{srcItemId}}"
+                },
+                {
+                  "key": "linktosprintid",
+                  "value": "{{sprintId}}"
+                },
+                {
+                  "key": "linktoprojectid",
+                  "value": "{{projectId}}"
+                },
+                {
+                  "key": "linktypeid",
+                  "value": "{{linktypeId}}"
+                },
+                {
+                  "key": "oldlinktypeid",
+                  "value": "{{linktypeId}}"
+                }
+              ]
+            },
+            "description": "Modify the link type of the existing item linked to a different link type.\n\nNote: If the main work item is linked with the direct link name and you update it with a new link type, the link type ID param that you pass will automatically update the linked item with its corresponding link name."
+          },
+          "response": []
+        },
+        {
+          "name": "Associate or update item tag",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/sprints/{{sprintId}}/item/{{itemId}}/tags/?action=associateupdate&newtags={{tagsArr}}&reassociate={{associate}}",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "sprints",
+                "{{sprintId}}",
+                "item",
+                "{{itemId}}",
+                "tags",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "associateupdate"
+                },
+                {
+                  "key": "newtags",
+                  "value": "{{tagsArr}}"
+                },
+                {
+                  "key": "reassociate",
+                  "value": "{{associate}}"
+                }
+              ]
+            },
+            "description": "Associate the custom tag to an item or update the existing tags associated with an item."
+          },
+          "response": []
+        },
+        {
+          "name": "Add or remove item followers",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/sprints/{{sprintId}}/item/{{itemId}}/followers/?action=updatefollowers&newusers={{newUserArr}}&delusers={{deleteUserArr}}",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "sprints",
+                "{{sprintId}}",
+                "item",
+                "{{itemId}}",
+                "followers",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "updatefollowers"
+                },
+                {
+                  "key": "newusers",
+                  "value": "{{newUserArr}}"
+                },
+                {
+                  "key": "delusers",
+                  "value": "{{deleteUserArr}}"
+                }
+              ]
+            },
+            "description": "Add new followers to an item or remove existing followers from an item."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete item",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/sprints/{{sprintId}}/item/{{itemId}}/",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "sprints",
+                "{{sprintId}}",
+                "item",
+                "{{itemId}}",
+                ""
+              ]
+            },
+            "description": "Delete an item."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete item attachment",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/sprints/{{sprintId}}/item/{{itemId}}/attachment/?docResourceId={{resourceId}}",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "sprints",
+                "{{sprintId}}",
+                "item",
+                "{{itemId}}",
+                "attachment",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "docResourceId",
+                  "value": "{{resourceId}}"
+                }
+              ]
+            },
+            "description": "Delete attachment from an item."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete item comment",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/modules/{{moduleId}}/entity/{{itemId}}/notes/{{notesId}}/",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "modules",
+                "{{moduleId}}",
+                "entity",
+                "{{itemId}}",
+                "notes",
+                "{{notesId}}",
+                ""
+              ]
+            },
+            "description": "Delete an item comment."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete item reminder",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/sprints/{{sprintId}}/item/{{itemId}}/reminder/{{reminderId}}/",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "sprints",
+                "{{sprintId}}",
+                "item",
+                "{{itemId}}",
+                "reminder",
+                "{{reminderId}}",
+                ""
+              ]
+            },
+            "description": "Delete an item reminder."
+          },
+          "response": []
+        },
+        {
+          "name": "Delink item",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/sprints/{{sprintId}}/item/{{itemId}}/linkitem/?linktypeid={{linktypeId}}&linktoprojectid={{projectId}}&destitemid={{itemId}}&srcitemid={{itemId}}",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "sprints",
+                "{{sprintId}}",
+                "item",
+                "{{itemId}}",
+                "linkitem",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "linktypeid",
+                  "value": "{{linktypeId}}"
+                },
+                {
+                  "key": "linktoprojectid",
+                  "value": "{{projectId}}"
+                },
+                {
+                  "key": "destitemid",
+                  "value": "{{itemId}}"
+                },
+                {
+                  "key": "srcitemid",
+                  "value": "{{itemId}}"
+                }
+              ]
+            },
+            "description": "Delink the work items to remove the linking."
+          },
+          "response": []
+        }
+      ],
+      "description": "Create items within a sprint to bring more clarity to the kind of work that you are currently sprinting on."
+    },
+    {
+      "name": "Epic",
+      "item": [
+        {
+          "name": "Get epics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/epic/?action=data&index=1&range=10&viewtype={{viewType}}&searchvalue={{searchValue}}",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "epic",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "data"
+                },
+                {
+                  "key": "index",
+                  "value": "1"
+                },
+                {
+                  "key": "range",
+                  "value": "10"
+                },
+                {
+                  "key": "viewtype",
+                  "value": "{{viewType}}",
+                  "type": "text"
+                },
+                {
+                  "key": "searchvalue",
+                  "value": "{{searchValue}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "description": "Fetch the list of epics present inside a specific project."
+          },
+          "response": []
+        },
+        {
+          "name": "Get epic details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/epic/{{epicId}}/?action=details",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "epic",
+                "{{epicId}}",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "details"
+                }
+              ]
+            },
+            "description": "Fetch the details of a particular epic"
+          },
+          "response": []
+        },
+        {
+          "name": "Get associated sprints",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/epic/{{epicId}}/sprints/?index=1&range=10",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "epic",
+                "{{epicId}}",
+                "sprints",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "index",
+                  "value": "1"
+                },
+                {
+                  "key": "range",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Fetch the list of all the sprints associated to a specific epic."
+          },
+          "response": []
+        },
+        {
+          "name": "Get associated items",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/sprints/{{sprintId}}/item/?action=data&index=1&range=10&filter={\"I-epic\":[\"{{epicId}}\"],\"queryType\":1,\"jsontmpl\":\"item_default\"}",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "sprints",
+                "{{sprintId}}",
+                "item",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "data"
+                },
+                {
+                  "key": "index",
+                  "value": "1"
+                },
+                {
+                  "key": "range",
+                  "value": "10"
+                },
+                {
+                  "key": "filter",
+                  "value": "{\"I-epic\":[\"{{epicId}}\"],\"queryType\":1,\"jsontmpl\":\"item_default\"}"
+                }
+              ]
+            },
+            "description": "Fetch the list of all the work items associated to a specific epic."
+          },
+          "response": []
+        },
+        {
+          "name": "Create epic",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "name",
+                  "value": "{{epicName}}",
+                  "type": "text"
+                },
+                {
+                  "key": "desc",
+                  "value": "{{desc}}",
+                  "type": "text"
+                },
+                {
+                  "key": "owner",
+                  "value": "{{ownerId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "color",
+                  "value": "{{colorCode}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/epic/",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "epic",
+                ""
+              ]
+            },
+            "description": "Create an epic in a specific project."
+          },
+          "response": []
+        },
+        {
+          "name": "Associate items with epic",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/sprints/{{sprintId}}/item/associate/?epicid={{epicId}}&rootitemidarr={{rootItemsArr}}",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "sprints",
+                "{{sprintId}}",
+                "item",
+                "associate",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "epicid",
+                  "value": "{{epicId}}"
+                },
+                {
+                  "key": "rootitemidarr",
+                  "value": "{{rootItemsArr}}"
+                }
+              ]
+            },
+            "description": "Associate one or more work items with a specific epic in a specific project."
+          },
+          "response": []
+        },
+        {
+          "name": "Update epic",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "name",
+                  "value": "{{epicName}}",
+                  "type": "text"
+                },
+                {
+                  "key": "desc",
+                  "value": "{{desc}}",
+                  "type": "text"
+                },
+                {
+                  "key": "owner",
+                  "value": "{{ownerId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "type",
+                  "value": "{{epicType}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/epic/{{epicId}}/",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "epic",
+                "{{epicId}}",
+                ""
+              ]
+            },
+            "description": "Modify an epic in a specific project."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete epic",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectid}}/epic/{{epicId}}/",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectid}}",
+                "epic",
+                "{{epicId}}",
+                ""
+              ]
+            },
+            "description": "Delete a specific epic in a specific project."
+          },
+          "response": []
+        }
+      ],
+      "description": "An epic is a large piece of work that comprises multiple user stories and sprints. When a huge product has to be shipped, it can be broken down into epics, and further down into sprints and work items. In Zoho Sprints, you can manage work items across relevant sprints by associating them to an epic and drive them to completion."
+    },
+    {
+      "name": "Timesheet",
+      "item": [
+        {
+          "name": "Get log hours",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/timesheet/?action=data&index=1&range=10&listviewtype={{listViewType}}&logtypes={{logTypeArr}}",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "timesheet",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "data"
+                },
+                {
+                  "key": "index",
+                  "value": "1"
+                },
+                {
+                  "key": "range",
+                  "value": "10"
+                },
+                {
+                  "key": "listviewtype",
+                  "value": "{{listViewType}}"
+                },
+                {
+                  "key": "logtypes",
+                  "value": "{{logTypeArr}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "description": "Fetch the list of time logs."
+          },
+          "response": []
+        },
+        {
+          "name": "Add item log hours",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/sprints/{{sprintId}}/item/{{itemId}}/timesheet/?action=additemlog&duration={{logDuration}}&date={{logDate}}&notes={{logNotes}}&users={{userId}}&isbillable={{billableType}}",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "sprints",
+                "{{sprintId}}",
+                "item",
+                "{{itemId}}",
+                "timesheet",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "additemlog"
+                },
+                {
+                  "key": "duration",
+                  "value": "{{logDuration}}",
+                  "type": "text"
+                },
+                {
+                  "key": "date",
+                  "value": "{{logDate}}",
+                  "type": "text"
+                },
+                {
+                  "key": "notes",
+                  "value": "{{logNotes}}",
+                  "type": "text"
+                },
+                {
+                  "key": "users",
+                  "value": "{{userId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "isbillable",
+                  "value": "{{billableType}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "description": "Add time logs for a specific item."
+          },
+          "response": []
+        },
+        {
+          "name": "Add general log hours",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/loghours/?logtitle={{logTitle}}&duration={{logDuration}}&date={{logDate}}&notes={{logNotes}}&users={{userId}}&isbillable={{billableType}}",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "loghours",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "logtitle",
+                  "value": "{{logTitle}}"
+                },
+                {
+                  "key": "duration",
+                  "value": "{{logDuration}}"
+                },
+                {
+                  "key": "date",
+                  "value": "{{logDate}}"
+                },
+                {
+                  "key": "notes",
+                  "value": "{{logNotes}}"
+                },
+                {
+                  "key": "users",
+                  "value": "{{userId}}"
+                },
+                {
+                  "key": "isbillable",
+                  "value": "{{billableType}}"
+                }
+              ]
+            },
+            "description": "Add general log hour."
+          },
+          "response": []
+        },
+        {
+          "name": "Update log hours",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/timesheet/{{logId}}/?action=updatelog&duration={{logDuration}}&date={{logDate}}&notes={{logNotes}}&users={{userId}}&isbillable={{billableType}}&approvetype={{approveType}}",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "timesheet",
+                "{{logId}}",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "updatelog"
+                },
+                {
+                  "key": "duration",
+                  "value": "{{logDuration}}"
+                },
+                {
+                  "key": "date",
+                  "value": "{{logDate}}"
+                },
+                {
+                  "key": "notes",
+                  "value": "{{logNotes}}"
+                },
+                {
+                  "key": "users",
+                  "value": "{{userId}}"
+                },
+                {
+                  "key": "isbillable",
+                  "value": "{{billableType}}"
+                },
+                {
+                  "key": "approvetype",
+                  "value": "{{approveType}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "description": "Update a specific time log."
+          },
+          "response": []
+        },
+        {
+          "name": "Approve log hours",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/timesheet/?action=approvelogs&isapproved={{isApproved}}&logidarr={{logIdArr}}&rejectnotes={{rejectNotes}}",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "timesheet",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "approvelogs"
+                },
+                {
+                  "key": "isapproved",
+                  "value": "{{isApproved}}"
+                },
+                {
+                  "key": "logidarr",
+                  "value": "{{logIdArr}}"
+                },
+                {
+                  "key": "rejectnotes",
+                  "value": "{{rejectNotes}}"
+                }
+              ]
+            },
+            "description": "Approve a specific time log."
+          },
+          "response": []
+        },
+        {
+          "name": "Update billing status",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/timesheet/?action=updatebillingstatus&isbillable={{isBillable}}&logidarr={{logIdArr}}",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "timesheet",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "updatebillingstatus"
+                },
+                {
+                  "key": "isbillable",
+                  "value": "{{isBillable}}"
+                },
+                {
+                  "key": "logidarr",
+                  "value": "{{logIdArr}}"
+                }
+              ]
+            },
+            "description": "Update billing status for log hour."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete log hours",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/timesheet/?action=deletelogs&logidarr={{logIdArr}}",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "timesheet",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "deletelogs"
+                },
+                {
+                  "key": "logidarr",
+                  "value": "{{logIdArr}}"
+                }
+              ]
+            },
+            "description": "Delete a specific time log"
+          },
+          "response": []
+        }
+      ],
+      "description": "With timesheet, you can measure the effort logged on every work item in your sprint. It helps in evaluating the team's productivity and performance."
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get workspace users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/team/{{teamId}}/users/?action=data&index=1&range=100&type={{type}}",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "team",
+                "{{teamId}}",
+                "users",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "data"
+                },
+                {
+                  "key": "index",
+                  "value": "1"
+                },
+                {
+                  "key": "range",
+                  "value": "100"
+                },
+                {
+                  "key": "type",
+                  "value": "{{type}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "description": "Fetch the list of all the users in a workspace."
+          },
+          "response": []
+        },
+        {
+          "name": "Get project users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/users/?action=data&index=1&range=100&type={{userType}}",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "users",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "data"
+                },
+                {
+                  "key": "index",
+                  "value": "1"
+                },
+                {
+                  "key": "range",
+                  "value": "100"
+                },
+                {
+                  "key": "type",
+                  "value": "{{userType}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "description": "Fetch the list of all the users in a project"
+          },
+          "response": []
+        },
+        {
+          "name": "Get sprint users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/sprints/{{sprintId}}/users/?action=data&index=1&range=10",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "sprints",
+                "{{sprintId}}",
+                "users",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "data"
+                },
+                {
+                  "key": "index",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "range",
+                  "value": "10",
+                  "type": "text"
+                }
+              ]
+            },
+            "description": "Fetch the list of users in a sprint."
+          },
+          "response": []
+        },
+        {
+          "name": "Add workspace users",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/users/?users={{userIds}}&projids={{projIds}}",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "users",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "users",
+                  "value": "{{userIds}}"
+                },
+                {
+                  "key": "projids",
+                  "value": "{{projIds}}"
+                }
+              ]
+            },
+            "description": "Add users to a specific workspace."
+          },
+          "response": []
+        },
+        {
+          "name": "Add project users",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/users/?newusers={{userIds}}&oldusers={{userIds}}",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "users",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "newusers",
+                  "value": "{{userIds}}"
+                },
+                {
+                  "key": "oldusers",
+                  "value": "{{userIds}}"
+                }
+              ]
+            },
+            "description": "Add users to a specific project."
+          },
+          "response": []
+        },
+        {
+          "name": "Add sprint users",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/sprints/{{sprintId}}/users/?action=adduser&users={{userIds}}",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "sprints",
+                "{{sprintId}}",
+                "users",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "adduser"
+                },
+                {
+                  "key": "users",
+                  "value": "{{userIds}}"
+                }
+              ]
+            },
+            "description": "Add existing users to a specific sprint."
+          },
+          "response": []
+        },
+        {
+          "name": "Update user role",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/users/{{userId}}/?action=role&roleid={{roleId}}",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "users",
+                "{{userId}}",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "role"
+                },
+                {
+                  "key": "roleid",
+                  "value": "{{roleId}}"
+                }
+              ]
+            },
+            "description": "Update the role of a specific user in a workspace."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete workspace user",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/users/{{userId}}/",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "users",
+                "{{userId}}",
+                ""
+              ]
+            },
+            "description": "Delete a specific user in a workspace."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete project user",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/users/{{userId}}/",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "users",
+                "{{userId}}",
+                ""
+              ]
+            },
+            "description": "Delete a specific user in a project."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete sprint user",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{User.Auth_Token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://sprintsapi.zoho.com/zsapi/team/{{teamId}}/projects/{{projectId}}/sprints/{{sprintId}}/users/{{userId}}/",
+              "protocol": "https",
+              "host": [
+                "sprintsapi",
+                "zoho",
+                "com"
+              ],
+              "path": [
+                "zsapi",
+                "team",
+                "{{teamId}}",
+                "projects",
+                "{{projectId}}",
+                "sprints",
+                "{{sprintId}}",
+                "users",
+                "{{userId}}",
+                ""
+              ]
+            },
+            "description": "Delete a specific user in a sprint."
+          },
+          "response": []
+        }
+      ],
+      "description": "Users are the workforce of a project. You can create and manage users with the Zoho Sprints APIs."
+    }
+  ],
+  "auth": {
+    "type": "apikey",
+    "apikey": [
+      {
+        "key": "key",
+        "value": "X-API-Key",
+        "type": "string"
+      },
+      {
+        "key": "value",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://farming-simulator.pstmn.io"
+    }
+  ]
+}

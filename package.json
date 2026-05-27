@@ -1,0 +1,23 @@
+{
+  "name": "zoho-sprints-power-grid",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.12.1",
+  "scripts": {
+    "dev": "pnpm --parallel --filter @zoho-power-grid/api --filter @zoho-power-grid/web dev",
+    "dev:api": "pnpm --filter @zoho-power-grid/api dev",
+    "dev:web": "pnpm --filter @zoho-power-grid/web dev",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint",
+    "migrate": "pnpm --filter @zoho-power-grid/api migrate",
+    "seed": "pnpm --filter @zoho-power-grid/api seed"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@nestjs/core",
+      "better-sqlite3",
+      "esbuild"
+    ]
+  }
+}

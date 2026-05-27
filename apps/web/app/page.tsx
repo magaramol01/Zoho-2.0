@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react';
 import type { ColDef } from 'ag-grid-community';
 import BottomTabBar from '@/components/bottom-tab-bar';
 import GridSpace, { type GridRow } from '@/components/grid-space';
-import RightSidebar from '@/components/right-sidebar';
 import {
   FileSpreadsheet,
   MessageSquare,
@@ -415,8 +414,6 @@ export default function Page() {
             onTogglePin={handleTogglePinnedProject}
           />
         </div>
-
-        <RightSidebar />
       </div>
     </main>
   );

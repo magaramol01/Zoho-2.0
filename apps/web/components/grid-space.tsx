@@ -2,20 +2,21 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  AllCommunityModule,
   ModuleRegistry,
   type BodyScrollEvent,
   type ColDef,
   type FilterChangedEvent,
   type GridApi,
   type GridReadyEvent,
+  type SideBarDef,
   type ValueFormatterParams,
 } from 'ag-grid-community';
+import { AllEnterpriseModule } from 'ag-grid-enterprise';
 import { AgGridReact } from 'ag-grid-react';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
 
-ModuleRegistry.registerModules([AllCommunityModule]);
+ModuleRegistry.registerModules([AllEnterpriseModule]);
 
 export type GridRow = Record<string, string | number | null>;
 
@@ -73,6 +74,41 @@ export default function GridSpace({
         buttons: ['apply', 'reset', 'clear', 'cancel'],
         closeOnApply: true,
       },
+    }),
+    [],
+  );
+
+  const sideBar = useMemo<SideBarDef>(
+    () => ({
+      position: 'right',
+      toolPanels: [
+        {
+          id: 'columns',
+          labelDefault: 'Columns',
+          labelKey: 'columns',
+          iconKey: 'columns',
+          toolPanel: 'agColumnsToolPanel',
+          width: 250,
+          minWidth: 220,
+          maxWidth: 320,
+          toolPanelParams: {
+            suppressRowGroups: true,
+            suppressValues: true,
+            suppressPivots: true,
+            suppressPivotMode: true,
+          },
+        },
+        {
+          id: 'filters',
+          labelDefault: 'Filters',
+          labelKey: 'filters',
+          iconKey: 'filter',
+          toolPanel: 'agFiltersToolPanel',
+          width: 280,
+          minWidth: 240,
+          maxWidth: 360,
+        },
+      ],
     }),
     [],
   );
@@ -268,6 +304,7 @@ export default function GridSpace({
           rowData={rowData}
           columnDefs={columns}
           defaultColDef={defaultColDef}
+          sideBar={sideBar}
           headerHeight={32}
           rowHeight={32}
           animateRows

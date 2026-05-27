@@ -53,6 +53,36 @@ button {
   display: none !important;
 }
 
+.sheet-grid .ag-side-bar {
+  border-left: 1px solid #e2e8f0;
+  background: #ffffff;
+}
+
+.sheet-grid .ag-side-buttons {
+  padding-top: 8px;
+  gap: 4px;
+  background: #ffffff;
+}
+
+.sheet-grid .ag-side-button {
+  margin: 0;
+}
+
+.sheet-grid .ag-side-button-button {
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 8px;
+}
+
+.sheet-grid .ag-side-button-button.ag-selected {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.sheet-grid .ag-tool-panel-wrapper {
+  border-left: 1px solid #e2e8f0;
+}
+
 .sheet-grid .ag-header {
   border-bottom: 1px solid #dbe3ee;
 }

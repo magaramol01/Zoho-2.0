@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "ag-grid-community": "^35.3.0",
+    "ag-grid-enterprise": "35.3.0",
     "ag-grid-react": "^35.3.0",
     "clsx": "^2.1.1",
     "lucide-react": "^1.16.0",

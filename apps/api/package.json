@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "tsx watch src/main.ts",
+    "dev": "node scripts/dev.mjs",
     "start": "node --env-file=.env dist/apps/api/src/main.js",
     "build": "tsc -p tsconfig.json",
     "lint": "tsc -p tsconfig.json --noEmit",

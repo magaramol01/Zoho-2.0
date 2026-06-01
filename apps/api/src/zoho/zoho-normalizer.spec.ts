@@ -98,6 +98,30 @@ describe("ZohoNormalizer", () => {
     expect(result[1]?.billable).toBe(true);
   });
 
+  it("normalizes log owner fields when the timesheet payload exposes them", () => {
+    const result = normalizer.normalizeTimesheetLogs({
+      data: [
+        {
+          id: "log-owner-1",
+          itemid: "task-1",
+          projectid: "project-1",
+          date: "2026-05-27",
+          duration: "30",
+          user: {
+            userid: "user-1",
+            zsname: "Amol Magar",
+          },
+        },
+      ],
+    });
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({
+      userId: "user-1",
+      userName: "Amol Magar",
+    });
+  });
+
   it("formats log dates for Zoho timesheet write APIs", () => {
     expect(toZohoLogDateTime("2026-05-27")).toMatch(
       /^2026-05-27T00:00:00[+-]\d{4}$/,

@@ -461,10 +461,29 @@ export class TasksService {
     }
 
     let zohoResponse: unknown = null;
+    const [fallbackUser] = await this.db.db.select().from(userCacheTable).limit(1);
+    const assigneeIds = parseJsonList(task.assigneeIdsJson);
+    const resolvedUserId =
+      body.userId ??
+      assigneeIds[0] ??
+      (await this.getCurrentZohoUserId()) ??
+      fallbackUser?.id ??
+      "";
+    const resolvedUserName =
+      (resolvedUserId
+        ? (
+            await this.db.db
+              .select()
+              .from(userCacheTable)
+              .where(eq(userCacheTable.id, resolvedUserId))
+              .limit(1)
+          )[0]?.name
+        : null) ??
+      (await this.getCurrentZohoUserName()) ??
+      fallbackUser?.name ??
+      null;
 
     if ((await this.zohoApiClient.canUseZoho()) && task.sprintId) {
-      const [fallbackUser] = await this.db.db.select().from(userCacheTable).limit(1);
-      const assigneeIds = parseJsonList(task.assigneeIdsJson);
       zohoResponse = await this.zohoApiClient.request({
         path: `/zsapi/team/${task.workspaceId}/projects/${task.projectId}/sprints/${task.sprintId}/item/${taskId}/timesheet/`,
         method: "POST",
@@ -473,14 +492,16 @@ export class TasksService {
           duration: toZohoLogDuration(body.durationMinutes),
           date: toZohoLogDateTime(body.date),
           notes: body.notes ?? "",
-          users: body.userId ?? assigneeIds[0] ?? fallbackUser?.id ?? "",
+          users: resolvedUserId,
           isbillable: toZohoBooleanFlag(body.billable),
         },
       });
     }
 
-    const logId =
-      this.zohoNormalizer.normalizeTimesheetLogs(zohoResponse).find((log) => log.id)?.id ?? nanoid();
+    const normalizedZohoLog = this.zohoNormalizer
+      .normalizeTimesheetLogs(zohoResponse)
+      .find((log) => log.id);
+    const logId = normalizedZohoLog?.id ?? nanoid();
     await this.db.db.insert(timesheetLogCacheTable).values({
       id: logId,
       taskId,
@@ -491,8 +512,14 @@ export class TasksService {
       date: body.date,
       durationMinutes: body.durationMinutes,
       notes: body.notes ?? "",
+      userId: normalizedZohoLog?.userId ?? resolvedUserId,
+      userName: normalizedZohoLog?.userName ?? resolvedUserName,
       billable: body.billable,
-      rawJson: JSON.stringify(body),
+      rawJson: JSON.stringify({
+        ...body,
+        userId: normalizedZohoLog?.userId ?? resolvedUserId,
+        userName: normalizedZohoLog?.userName ?? resolvedUserName,
+      }),
       syncedAt: new Date().toISOString(),
     });
 
@@ -525,6 +552,24 @@ export class TasksService {
       .select()
       .from(syncStateTable)
       .where(eq(syncStateTable.key, "current_zoho_user_id"))
+      .limit(1);
+    return fallback?.value ?? null;
+  }
+
+  private async getCurrentZohoUserName() {
+    const [row] = await this.db.db
+      .select()
+      .from(syncStateTable)
+      .where(eq(syncStateTable.key, "current_zoho_internal_user_name"))
+      .limit(1);
+    if (row?.value) {
+      return row.value;
+    }
+
+    const [fallback] = await this.db.db
+      .select()
+      .from(syncStateTable)
+      .where(eq(syncStateTable.key, "current_zoho_user_name"))
       .limit(1);
     return fallback?.value ?? null;
   }

@@ -1,6 +1,11 @@
 import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from "@nestjs/common";
 import { SessionAuthGuard } from "../auth/session-auth.guard";
-import { BulkTimesheetDto, TimesheetQueryDto, UpdateTimesheetLogDto } from "./dto";
+import {
+  BulkTimesheetDto,
+  TimesheetAnalyticsQueryDto,
+  TimesheetQueryDto,
+  UpdateTimesheetLogDto,
+} from "./dto";
 import { TimesheetService } from "./timesheet.service";
 
 @Controller("timesheet")
@@ -11,6 +16,11 @@ export class TimesheetController {
   @Get()
   listLogs(@Query() query: TimesheetQueryDto) {
     return this.timesheetService.listLogs(query);
+  }
+
+  @Get("analytics")
+  getAnalytics(@Query() query: TimesheetAnalyticsQueryDto) {
+    return this.timesheetService.getAnalytics(query);
   }
 
   @Post("bulk")

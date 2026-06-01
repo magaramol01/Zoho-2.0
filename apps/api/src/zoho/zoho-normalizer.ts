@@ -86,6 +86,105 @@ const coerceList = (value: unknown): unknown[] => {
   return [];
 };
 
+const coerceFirst = (value: unknown) =>
+  Array.isArray(value) ? value[0] : value;
+
+const resolveCandidateValue = (
+  row: UnknownRecord,
+  candidates: string[],
+) => {
+  for (const candidate of candidates) {
+    if (candidate in row && row[candidate] !== undefined && row[candidate] !== null) {
+      return row[candidate];
+    }
+  }
+
+  return undefined;
+};
+
+const extractUserFromValue = (value: unknown) => {
+  const entry = asRecord(coerceFirst(value));
+  const id = asNullableString(
+    entry.id ??
+      entry.userid ??
+      entry.userId ??
+      entry.user_id ??
+      entry.ownerid ??
+      entry.ownerId ??
+      entry.logownerid ??
+      entry.logOwnerId,
+  );
+  const name = asNullableString(
+    entry.name ??
+      entry.zsname ??
+      entry.display_name ??
+      entry.displayName ??
+      entry.username ??
+      entry.userName,
+  );
+
+  return { id, name };
+};
+
+const resolveLogUser = (row: UnknownRecord) => {
+  const directId = asNullableString(
+    resolveCandidateValue(row, [
+      "userid",
+      "userId",
+      "user_id",
+      "ownerid",
+      "ownerId",
+      "logownerid",
+      "logOwnerId",
+      "loguserid",
+      "logUserId",
+      "personid",
+      "personId",
+    ]),
+  );
+  const directName = asNullableString(
+    resolveCandidateValue(row, [
+      "username",
+      "userName",
+      "user_name",
+      "ownername",
+      "ownerName",
+      "logownername",
+      "logOwnerName",
+      "personname",
+      "personName",
+    ]),
+  );
+
+  if (directId || directName) {
+    return { userId: directId, userName: directName };
+  }
+
+  const nestedUser = extractUserFromValue(
+    resolveCandidateValue(row, ["user", "users", "owner", "loguser", "logUser"]),
+  );
+
+  return {
+    userId: nestedUser.id,
+    userName: nestedUser.name,
+  };
+};
+
+const matrixValueFromProps = (
+  values: unknown[],
+  props: UnknownRecord,
+  candidates: string[],
+) => {
+  for (const candidate of candidates) {
+    const index = Number(props[candidate]);
+    if (!Number.isNaN(index) && index >= 0 && index < values.length) {
+      return values[index];
+    }
+  }
+
+  return undefined;
+};
+
 const normalizedRows = (
   payload: unknown,
   idsKey: string,
@@ -335,19 +434,49 @@ export class ZohoNormalizer {
     const matrix = normalizedRows(payload, "logIds", "logJObj", "log_prop");
     if (matrix.length) {
       return matrix
-        .map(({ id, values, props }) => ({
-          id,
-          taskId: asNullableString(values[Number(props.itemId ?? 8)]),
-          projectId: asString(values[Number(props.projectId ?? 32)]),
-          projectName: "",
-          sprintId: asNullableString(values[Number(props.sprintId ?? 0)]),
-          taskName: asNullableString(values[Number(props.itemName ?? 2)]),
-          date: asString(values[Number(props.logDate ?? 12)]).slice(0, 10),
-          durationMinutes: parseDurationToMinutes(values[Number(props.timeTaken ?? props.duration ?? 13)]),
-          notes: asString(values[Number(props.logNotes ?? 18)]),
-          billable: asZohoBoolean(values[Number(props.billableType ?? 14)]),
-          updatedAt: asString(values[Number(props.lastUpdatedTime ?? 28)]) || new Date().toISOString(),
-        }))
+        .map(({ id, values, props }) => {
+          const userId = asNullableString(
+            matrixValueFromProps(values, props, [
+              "userId",
+              "userid",
+              "user_id",
+              "ownerId",
+              "ownerid",
+              "logOwnerId",
+              "logownerid",
+              "logUserId",
+              "loguserid",
+            ]),
+          );
+          const userName = asNullableString(
+            matrixValueFromProps(values, props, [
+              "userName",
+              "username",
+              "user_name",
+              "ownerName",
+              "ownername",
+              "logOwnerName",
+              "logownername",
+            ]),
+          );
+
+          return {
+            id,
+            taskId: asNullableString(values[Number(props.itemId ?? 8)]),
+            projectId: asString(values[Number(props.projectId ?? 32)]),
+            projectName: "",
+            sprintId: asNullableString(values[Number(props.sprintId ?? 0)]),
+            taskName: asNullableString(values[Number(props.itemName ?? 2)]),
+            date: asString(values[Number(props.logDate ?? 12)]).slice(0, 10),
+            durationMinutes: parseDurationToMinutes(values[Number(props.timeTaken ?? props.duration ?? 13)]),
+            notes: asString(values[Number(props.logNotes ?? 18)]),
+            userId,
+            userName,
+            billable: asZohoBoolean(values[Number(props.billableType ?? 14)]),
+            updatedAt:
+              asString(values[Number(props.lastUpdatedTime ?? 28)]) || new Date().toISOString(),
+          };
+        })
         .filter((row): row is TimesheetLog => Boolean(row.id));
     }
 
@@ -361,6 +490,8 @@ export class ZohoNormalizer {
           return null;
         }
 
+        const { userId, userName } = resolveLogUser(row);
+
         return {
           id,
           taskId: asNullableString(row.itemid ?? row.taskId),
@@ -371,6 +502,8 @@ export class ZohoNormalizer {
           date: asString(row.date).slice(0, 10),
           durationMinutes: parseDurationToMinutes(row.duration ?? row.minutes),
           notes: asString(row.notes),
+          userId,
+          userName,
           billable: asZohoBoolean(row.isbillable ?? row.billable),
           updatedAt: new Date().toISOString(),
         } satisfies TimesheetLog;

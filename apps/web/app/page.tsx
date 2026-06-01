@@ -4,6 +4,10 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import type { ColDef } from "ag-grid-community"
 import BottomTabBar from "@/components/bottom-tab-bar"
 import GridSpace, { type GridRow } from "@/components/grid-space"
+import TimesheetAnalytics, {
+  type AnalyticsUserOption,
+  type TimesheetAnalyticsSummary,
+} from "@/components/timesheet-analytics"
 import {
   CalendarDays,
   Clock3,
@@ -61,6 +65,8 @@ type TaskLog = {
   date: string
   durationMinutes: number
   notes: string
+  userId: string | null
+  userName: string | null
   billable: boolean
   updatedAt: string
 }
@@ -87,6 +93,7 @@ type BootstrapPayload = {
   } | null
   metadata: {
     statuses: StatusOption[]
+    users: AnalyticsUserOption[]
   }
   message?: string
   details?: string
@@ -163,7 +170,11 @@ function formatHumanDate(value: string) {
 }
 
 function getTodayIso() {
-  return new Date().toISOString().slice(0, 10)
+  const today = new Date()
+  return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(
+    2,
+    "0"
+  )}-${String(today.getDate()).padStart(2, "0")}`
 }
 
 function getUserInitial(
@@ -206,6 +217,7 @@ const dateFilterParams = {
 
 export default function Page() {
   const [bootstrap, setBootstrap] = useState<BootstrapPayload | null>(null)
+  const [activeView, setActiveView] = useState<"sheet" | "analytics">("sheet")
   const [projects, setProjects] = useState<Project[]>([])
   const [tasksByProjectId, setTasksByProjectId] = useState<
     Record<string, TaskItem[]>
@@ -232,6 +244,12 @@ export default function Page() {
     billable: true,
   })
   const [preferredLogUserId, setPreferredLogUserId] = useState("")
+  const [analyticsUserId, setAnalyticsUserId] = useState("")
+  const [analytics, setAnalytics] = useState<TimesheetAnalyticsSummary | null>(
+    null
+  )
+  const [analyticsLoading, setAnalyticsLoading] = useState(false)
+  const [analyticsError, setAnalyticsError] = useState<string | null>(null)
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -271,6 +289,14 @@ export default function Page() {
       setPreferredLogUserId("")
     }
   }, [])
+
+  useEffect(() => {
+    if (!preferredLogUserId) {
+      return
+    }
+
+    setAnalyticsUserId((current) => current || preferredLogUserId)
+  }, [preferredLogUserId])
 
   useEffect(() => {
     let cancelled = false
@@ -329,7 +355,7 @@ export default function Page() {
                       authenticated: false,
                       currentUser: null,
                       authUrl: LOCALHOST_LOGIN_URL,
-                      metadata: { statuses: [] },
+                      metadata: { statuses: [], users: [] },
                     }
               )
               setProjects([])
@@ -442,7 +468,7 @@ export default function Page() {
                     authenticated: false,
                     currentUser: null,
                     authUrl: LOCALHOST_LOGIN_URL,
-                    metadata: { statuses: [] },
+                    metadata: { statuses: [], users: [] },
                   }
             )
             setProjects([])
@@ -485,6 +511,92 @@ export default function Page() {
       cancelled = true
     }
   }, [activeProjectId, bootstrap?.authenticated, tasksByProjectId])
+
+  useEffect(() => {
+    if (!bootstrap?.authenticated || activeView !== "analytics") {
+      setAnalyticsLoading(false)
+      return
+    }
+
+    let cancelled = false
+
+    const loadAnalytics = async () => {
+      setAnalyticsLoading(true)
+      setAnalyticsError(null)
+
+      try {
+        const params = new URLSearchParams({ weeks: "12" })
+        if (analyticsUserId) {
+          params.set("userId", analyticsUserId)
+        }
+
+        const response = await fetch(
+          `/api/timesheet/analytics?${params.toString()}`,
+          {
+            cache: "no-store",
+          }
+        )
+        const payload = (await response.json()) as TimesheetAnalyticsSummary & {
+          message?: string
+          details?: string
+        }
+
+        if (!response.ok) {
+          if (response.status === 401 || response.status === 403) {
+            setBootstrap((current) =>
+              current
+                ? {
+                    ...current,
+                    authenticated: false,
+                    currentUser: null,
+                    authUrl: current.authUrl ?? LOCALHOST_LOGIN_URL,
+                  }
+                : {
+                    authenticated: false,
+                    currentUser: null,
+                    authUrl: LOCALHOST_LOGIN_URL,
+                    metadata: { statuses: [], users: [] },
+                  }
+            )
+            setProjects([])
+            setTasksByProjectId({})
+            setActiveProjectId("")
+            return
+          }
+
+          throw new Error(
+            payload.message ?? "Failed to load the timesheet analytics."
+          )
+        }
+
+        if (cancelled) {
+          return
+        }
+
+        setAnalytics(payload)
+      } catch (analyticsLoadError) {
+        if (cancelled) {
+          return
+        }
+
+        setAnalyticsError(
+          analyticsLoadError instanceof Error
+            ? analyticsLoadError.message
+            : "Failed to load the timesheet analytics."
+        )
+      } finally {
+        if (!cancelled) {
+          setAnalyticsLoading(false)
+        }
+      }
+    }
+
+    void loadAnalytics()
+
+    return () => {
+      cancelled = true
+    }
+  }, [activeView, analyticsUserId, bootstrap?.authenticated])
 
   const activeProject = useMemo(
     () =>
@@ -567,6 +679,13 @@ export default function Page() {
 
     return [...pinnedProjects, ...unpinnedProjects]
   }, [pinnedProjectIds, projects])
+
+  const analyticsUserOptions = useMemo(
+    () => bootstrap?.metadata.users ?? [],
+    [bootstrap?.metadata.users]
+  )
+
+  const currentAnalyticsWeek = analytics?.weeks[0] ?? null
 
   const applyTaskLoggedMinutes = useCallback(
     (taskId: string, loggedMinutes: number) => {
@@ -810,6 +929,7 @@ export default function Page() {
             durationMinutes: log.durationMinutes,
             billable: log.billable,
             notes: log.notes,
+            userId: log.userId || undefined,
           }),
         })
         const payload = (await response.json()) as TaskLog & {
@@ -894,6 +1014,7 @@ export default function Page() {
       })
       if (newLogDraft.userId) {
         setPreferredLogUserId(newLogDraft.userId)
+        setAnalyticsUserId((current) => current || newLogDraft.userId)
       }
       await fetchTaskLogs(selectedTask.id)
     } catch (error) {
@@ -1052,11 +1173,24 @@ export default function Page() {
     )
   }
 
-  const formulaText = activeProject
-    ? `${activeProject.name} | ${taskRows.length} items`
-    : loading || tasksLoading
-      ? "Loading projects..."
-      : "No project selected"
+  const formulaText =
+    activeView === "analytics"
+      ? analyticsLoading
+        ? "Loading timesheet analytics..."
+        : analytics
+          ? `${
+              analytics.userName ?? "Current Zoho user"
+            } | ${formatMinutesAsClock(
+              currentAnalyticsWeek?.loggedMinutes ?? analytics.totalLoggedMinutes
+            )} logged | ${formatMinutesAsClock(
+              currentAnalyticsWeek?.missingMinutes ?? 0
+            )} still missing this week`
+          : "Timesheet analytics"
+      : activeProject
+        ? `${activeProject.name} | ${taskRows.length} items`
+        : loading || tasksLoading
+          ? "Loading projects..."
+          : "No project selected"
 
   const loginHref = bootstrap?.authUrl ?? LOCALHOST_LOGIN_URL
   const userInitial = getUserInitial(
@@ -1124,7 +1258,9 @@ export default function Page() {
             </div>
             <div className="flex flex-col">
               <h1 className="text-lg leading-tight font-medium text-gray-800">
-                {activeProject?.name ?? "Project sheet"}
+                {activeView === "analytics"
+                  ? "Timesheet Analytics"
+                  : (activeProject?.name ?? "Project sheet")}
               </h1>
               <div className="mt-1 flex items-center gap-4 text-xs text-gray-500">
                 <span className="cursor-pointer rounded px-1 hover:bg-gray-100">
@@ -1148,6 +1284,21 @@ export default function Page() {
                 <span className="cursor-pointer rounded px-1 hover:bg-gray-100">
                   Tools
                 </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLogPanelTaskId(null)
+                    setLogPanelError(null)
+                    setActiveView("analytics")
+                  }}
+                  className={`rounded px-1 transition ${
+                    activeView === "analytics"
+                      ? "bg-sky-100 font-semibold text-sky-700"
+                      : "cursor-pointer hover:bg-gray-100"
+                  }`}
+                >
+                  Analytics
+                </button>
                 <span className="cursor-pointer rounded px-1 hover:bg-gray-100">
                   Help
                 </span>
@@ -1200,7 +1351,17 @@ export default function Page() {
         <div className="flex min-w-0 flex-1 overflow-hidden">
           <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
             <div className="min-w-0 flex-1 overflow-hidden">
-              {dataError ? (
+              {activeView === "analytics" ? (
+                <TimesheetAnalytics
+                  analytics={analytics}
+                  loading={analyticsLoading}
+                  error={analyticsError}
+                  availableUsers={analyticsUserOptions}
+                  selectedUserId={analyticsUserId}
+                  onUserChange={setAnalyticsUserId}
+                  onBackToSheets={() => setActiveView("sheet")}
+                />
+              ) : dataError ? (
                 <div className="flex h-full items-center justify-center bg-white px-6 text-center">
                   <div>
                     <div className="text-base font-medium text-gray-800">
@@ -1237,21 +1398,23 @@ export default function Page() {
                 />
               )}
             </div>
-            <BottomTabBar
-              sheets={orderedProjects.map((project) => ({
-                id: project.id,
-                name: project.name,
-              }))}
-              activeSheetId={activeProject?.id ?? ""}
-              onSheetChange={setActiveProjectId}
-              pinnedSheetIds={pinnedProjectIds}
-              onTogglePin={handleTogglePinnedProject}
-            />
+            {activeView === "sheet" ? (
+              <BottomTabBar
+                sheets={orderedProjects.map((project) => ({
+                  id: project.id,
+                  name: project.name,
+                }))}
+                activeSheetId={activeProject?.id ?? ""}
+                onSheetChange={setActiveProjectId}
+                pinnedSheetIds={pinnedProjectIds}
+                onTogglePin={handleTogglePinnedProject}
+              />
+            ) : null}
           </div>
         </div>
       </main>
 
-      {selectedTask ? (
+      {selectedTask && activeView === "sheet" ? (
         <TaskLogDrawer
           task={selectedTask}
           logs={selectedTaskLogs}

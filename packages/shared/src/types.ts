@@ -63,6 +63,7 @@ export type TimesheetDraft = {
   date: string;
   durationMinutes: number;
   notes?: string;
+  userId?: string;
   billable: boolean;
 };
 
@@ -76,8 +77,67 @@ export type TimesheetLog = {
   date: string;
   durationMinutes: number;
   notes: string;
+  userId: string | null;
+  userName: string | null;
   billable: boolean;
   updatedAt: string;
+};
+
+export type TimesheetAnalyticsDayStatus =
+  | "upcoming"
+  | "empty"
+  | "partial"
+  | "filled"
+  | "over"
+  | "weekend";
+
+export type TimesheetAnalyticsProjectBreakdown = {
+  projectId: string;
+  projectName: string;
+  durationMinutes: number;
+};
+
+export type TimesheetAnalyticsDay = {
+  date: string;
+  dayLabel: string;
+  isWeekend: boolean;
+  isFuture: boolean;
+  loggedMinutes: number;
+  targetMinutes: number;
+  missingMinutes: number;
+  entryCount: number;
+  projectCount: number;
+  status: TimesheetAnalyticsDayStatus;
+  projects: TimesheetAnalyticsProjectBreakdown[];
+};
+
+export type TimesheetAnalyticsWeek = {
+  weekStart: string;
+  weekEnd: string;
+  label: string;
+  loggedMinutes: number;
+  targetMinutes: number;
+  missingMinutes: number;
+  trackedWorkdayCount: number;
+  filledDays: number;
+  partialDays: number;
+  emptyDays: number;
+  overDays: number;
+  days: TimesheetAnalyticsDay[];
+};
+
+export type TimesheetAnalyticsSummary = {
+  userId: string | null;
+  userName: string | null;
+  generatedAt: string;
+  expectedMinutesPerWorkday: number;
+  selectedWeekCount: number;
+  matchedLogCount: number;
+  logsWithoutOwnerCount: number;
+  includedUnknownOwnerLogs: boolean;
+  totalLoggedMinutes: number;
+  attentionDays: TimesheetAnalyticsDay[];
+  weeks: TimesheetAnalyticsWeek[];
 };
 
 export type SavedView = {

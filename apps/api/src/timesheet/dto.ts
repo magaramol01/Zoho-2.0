@@ -3,6 +3,7 @@ import {
   IsArray,
   IsBoolean,
   IsInt,
+  Max,
   IsOptional,
   IsString,
   Min,
@@ -17,6 +18,19 @@ export class TimesheetQueryDto {
   @IsOptional()
   @IsString()
   taskId?: string;
+}
+
+export class TimesheetAnalyticsQueryDto {
+  @IsOptional()
+  @IsString()
+  userId?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(26)
+  weeks?: number;
 }
 
 export class CreateTaskLogDto {

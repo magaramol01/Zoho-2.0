@@ -83,6 +83,14 @@ button {
   border-left: 1px solid #e2e8f0;
 }
 
+.sheet-grid .ag-side-bar,
+.sheet-grid .ag-tool-panel-wrapper,
+.sheet-grid .ag-tool-panel-wrapper *,
+.sheet-panel-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f8fafc;
+}
+
 .sheet-grid .ag-filter-toolpanel-search {
   padding: 8px;
   border-bottom: 1px solid #e2e8f0;
@@ -150,7 +158,8 @@ button {
 }
 
 .sheet-view-scrollbar,
-.sheet-tabs-scroll {
+.sheet-tabs-scroll,
+.sheet-panel-scrollbar {
   overscroll-behavior-x: contain;
   scrollbar-width: thin;
   scrollbar-color: #cbd5e1 #f8fafc;
@@ -161,23 +170,40 @@ button {
 }
 
 .sheet-view-scrollbar::-webkit-scrollbar,
-.sheet-tabs-scroll::-webkit-scrollbar {
+.sheet-tabs-scroll::-webkit-scrollbar,
+.sheet-panel-scrollbar::-webkit-scrollbar,
+.sheet-grid .ag-side-bar::-webkit-scrollbar,
+.sheet-grid .ag-tool-panel-wrapper::-webkit-scrollbar,
+.sheet-grid .ag-tool-panel-wrapper *::-webkit-scrollbar {
+  width: 10px;
   height: 10px;
 }
 
 .sheet-view-scrollbar::-webkit-scrollbar-track,
-.sheet-tabs-scroll::-webkit-scrollbar-track {
+.sheet-tabs-scroll::-webkit-scrollbar-track,
+.sheet-panel-scrollbar::-webkit-scrollbar-track,
+.sheet-grid .ag-side-bar::-webkit-scrollbar-track,
+.sheet-grid .ag-tool-panel-wrapper::-webkit-scrollbar-track,
+.sheet-grid .ag-tool-panel-wrapper *::-webkit-scrollbar-track {
   background: #f8fafc;
 }
 
 .sheet-view-scrollbar::-webkit-scrollbar-thumb,
-.sheet-tabs-scroll::-webkit-scrollbar-thumb {
+.sheet-tabs-scroll::-webkit-scrollbar-thumb,
+.sheet-panel-scrollbar::-webkit-scrollbar-thumb,
+.sheet-grid .ag-side-bar::-webkit-scrollbar-thumb,
+.sheet-grid .ag-tool-panel-wrapper::-webkit-scrollbar-thumb,
+.sheet-grid .ag-tool-panel-wrapper *::-webkit-scrollbar-thumb {
   border: 2px solid #f8fafc;
   border-radius: 999px;
   background: #cbd5e1;
 }
 
 .sheet-view-scrollbar::-webkit-scrollbar-thumb:hover,
-.sheet-tabs-scroll::-webkit-scrollbar-thumb:hover {
+.sheet-tabs-scroll::-webkit-scrollbar-thumb:hover,
+.sheet-panel-scrollbar::-webkit-scrollbar-thumb:hover,
+.sheet-grid .ag-side-bar::-webkit-scrollbar-thumb:hover,
+.sheet-grid .ag-tool-panel-wrapper::-webkit-scrollbar-thumb:hover,
+.sheet-grid .ag-tool-panel-wrapper *::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }

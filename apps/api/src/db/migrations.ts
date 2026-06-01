@@ -213,4 +213,11 @@ export const migrations = [
       ALTER TABLE task_cache ADD COLUMN description TEXT;
     `,
   },
+  {
+    id: "0003_timesheet_log_owner_fields",
+    sql: `
+      ALTER TABLE timesheet_log_cache ADD COLUMN user_id TEXT;
+      ALTER TABLE timesheet_log_cache ADD COLUMN user_name TEXT;
+    `,
+  },
 ];

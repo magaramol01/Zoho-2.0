@@ -153,6 +153,8 @@ export const timesheetLogCacheTable = sqliteTable("timesheet_log_cache", {
   date: text("date").notNull(),
   durationMinutes: integer("duration_minutes").notNull(),
   notes: text("notes").notNull().default(""),
+  userId: text("user_id"),
+  userName: text("user_name"),
   billable: integer("billable", { mode: "boolean" }).notNull().default(false),
   rawJson: text("raw_json"),
   syncedAt: text("synced_at").notNull(),

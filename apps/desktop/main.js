@@ -10,6 +10,11 @@ const API_PORT = 3001;
 let webProcess = null;
 let apiProcess = null;
 
+// Set human-readable app name for Linux desktop environments (fixes dock/launcher showing package.json name)
+if (process.platform === 'linux') {
+  app.name = 'Zoho Power Grid';
+}
+
 // ── Single-instance lock ──────────────────────────────────────────────────────
 // Prevents a fork-bomb when the AppImage is launched multiple times quickly.
 const gotLock = app.requestSingleInstanceLock();

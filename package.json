@@ -11,13 +11,22 @@
     "test": "pnpm -r test",
     "lint": "pnpm -r lint",
     "migrate": "pnpm --filter @zoho-power-grid/api migrate",
-    "seed": "pnpm --filter @zoho-power-grid/api seed"
+    "seed": "pnpm --filter @zoho-power-grid/api seed",
+    "dev:desktop": "concurrently \"pnpm dev\" \"pnpm --filter @zoho-power-grid/desktop start\"",
+    "build:desktop": "pnpm -r build && pnpm --filter @zoho-power-grid/desktop dist"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
       "@nestjs/core",
       "better-sqlite3",
-      "esbuild"
+      "esbuild",
+      "electron",
+      "electron-winstaller",
+      "sharp",
+      "unrs-resolver"
     ]
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.1"
   }
 }

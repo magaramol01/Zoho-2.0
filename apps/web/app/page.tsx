@@ -5,16 +5,13 @@ import type { ColDef } from "ag-grid-community"
 import BottomTabBar from "@/components/bottom-tab-bar"
 import GridSpace, { type GridRow } from "@/components/grid-space"
 import {
-  ArrowRight,
   CalendarDays,
   Clock3,
   FileSpreadsheet,
-  LockKeyhole,
   MessageSquare,
   MoreVertical,
   Plus,
   Share,
-  ShieldCheck,
   X,
 } from "lucide-react"
 
@@ -217,7 +214,6 @@ export default function Page() {
   const [pinnedProjectIds, setPinnedProjectIds] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [tasksLoading, setTasksLoading] = useState(false)
-  const [authError, setAuthError] = useState<string | null>(null)
   const [dataError, setDataError] = useState<string | null>(null)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
 
@@ -281,7 +277,6 @@ export default function Page() {
 
     const loadPage = async () => {
       setLoading(true)
-      setAuthError(null)
       setDataError(null)
 
       try {
@@ -371,16 +366,10 @@ export default function Page() {
               : "Failed to load the project tabs."
           )
         }
-      } catch (loadError) {
+      } catch {
         if (cancelled) {
           return
         }
-
-        setAuthError(
-          loadError instanceof Error
-            ? loadError.message
-            : "Unable to start Zoho Power Grid."
-        )
       } finally {
         if (!cancelled) {
           setLoading(false)
@@ -1099,62 +1088,28 @@ export default function Page() {
 
   if (!bootstrap?.authenticated) {
     return (
-      <main className="flex min-h-screen bg-[linear-gradient(135deg,#fff7ed_0%,#eff6ff_42%,#ecfeff_100%)] px-6 py-10 text-slate-900">
-        <div className="mx-auto grid w-full max-w-6xl gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-          <section className="relative overflow-hidden rounded-[36px] border border-slate-200/80 bg-white/90 p-8 shadow-[0_36px_90px_rgba(15,23,42,0.14)] backdrop-blur lg:p-10">
-            <div className="absolute top-0 right-0 h-48 w-48 rounded-full bg-emerald-200/40 blur-3xl" />
-            <div className="absolute bottom-0 left-10 h-36 w-36 rounded-full bg-sky-200/40 blur-3xl" />
-            <div className="relative">
-              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium tracking-[0.24em] text-emerald-700 uppercase">
-                <LockKeyhole className="h-3.5 w-3.5" />
-                Login Required
-              </div>
-              <h1 className="mt-6 max-w-xl text-4xl font-semibold tracking-tight text-slate-950 lg:text-5xl">
-                Connect Zoho first, then open the dashboard.
-              </h1>
-              <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600">
-                This localhost build stays locked until a Zoho OAuth session is
-                created. If the user has not signed in with Zoho yet, they stay
-                here instead of landing on the sheet directly.
-              </p>
-
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <a
-                  href={loginHref}
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-slate-950 px-6 py-3 text-sm font-medium text-white transition hover:bg-slate-800"
-                >
-                  Continue with Zoho
-                  <ArrowRight className="h-4 w-4" />
-                </a>
-                <div className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white/80 px-5 py-3 text-sm text-slate-600">
-                  Local auth callback returns to `localhost:3000`
-                </div>
-              </div>
-
-              {authError ? (
-                <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-                  {authError}
-                </div>
-              ) : null}
-            </div>
-          </section>
-
-          <aside className="rounded-[32px] border border-slate-200/80 bg-slate-950 p-6 text-slate-50 shadow-[0_30px_70px_rgba(15,23,42,0.18)] lg:p-8">
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 text-emerald-300">
-                <ShieldCheck className="h-5 w-5" />
-              </div>
-              <div>
-                <div className="text-sm font-medium text-white">
-                  Dashboard access is gated
-                </div>
-                <div className="text-sm text-slate-400">
-                  Only signed-in localhost users can reach the grid.
-                </div>
-              </div>
-            </div>
-          </aside>
-        </div>
+      <main className="flex min-h-screen items-center justify-center bg-white px-6 text-slate-900">
+        <a
+          href={loginHref}
+          className="inline-flex min-h-14 items-center justify-center gap-3 rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold tracking-tight text-slate-900 shadow-sm transition hover:bg-slate-50"
+        >
+          <span aria-hidden="true" className="inline-flex items-center gap-1">
+            <span className="inline-flex h-5 w-5 items-center justify-center rounded-[4px] bg-[#e42527] text-[8px] leading-none font-bold text-white">
+              Z
+            </span>
+            <span className="inline-flex h-5 w-5 items-center justify-center rounded-[4px] bg-[#159b48] text-[8px] leading-none font-bold text-white">
+              O
+            </span>
+            <span className="inline-flex h-5 w-5 items-center justify-center rounded-[4px] bg-[#1f70c1] text-[8px] leading-none font-bold text-white">
+              H
+            </span>
+            <span className="inline-flex h-5 w-5 items-center justify-center rounded-[4px] bg-[#f4af1d] text-[8px] leading-none font-bold text-white">
+              O
+            </span>
+          </span>
+          <span className="h-5 w-px bg-slate-200" />
+          <span className="whitespace-nowrap">Continue with Zoho</span>
+        </a>
       </main>
     )
   }

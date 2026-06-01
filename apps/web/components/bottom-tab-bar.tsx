@@ -1,6 +1,12 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState, type WheelEvent } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type WheelEvent,
+} from 'react';
 import { Menu, Pin, PinOff, Plus } from 'lucide-react';
 
 interface SheetTab {
@@ -42,6 +48,7 @@ export default function BottomTabBar({
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
   const scrollbarRef = useRef<HTMLDivElement | null>(null);
+  const tabRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const syncHorizontalMetrics = useCallback((nextScrollLeft?: number) => {
     const viewport = viewportRef.current;
@@ -100,7 +107,9 @@ export default function BottomTabBar({
   const handleViewportWheel = useCallback(
     (event: WheelEvent<HTMLDivElement>) => {
       const delta =
-        Math.abs(event.deltaX) > 0 ? event.deltaX : event.shiftKey ? event.deltaY : 0;
+        Math.abs(event.deltaX) > Math.abs(event.deltaY)
+          ? event.deltaX
+          : event.deltaY;
 
       if (!delta) {
         return;
@@ -125,6 +134,34 @@ export default function BottomTabBar({
       setTabScrollLeft,
     ],
   );
+
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    const activeTab = tabRefs.current[activeSheetId];
+
+    if (!viewport || !activeTab) {
+      return;
+    }
+
+    const activeStart = activeTab.offsetLeft;
+    const activeEnd = activeStart + activeTab.offsetWidth;
+    const visibleStart = horizontalMetrics.scrollLeft;
+    const visibleEnd = visibleStart + horizontalMetrics.clientWidth;
+
+    if (activeStart < visibleStart) {
+      setTabScrollLeft(activeStart);
+      return;
+    }
+
+    if (activeEnd > visibleEnd) {
+      setTabScrollLeft(activeEnd - horizontalMetrics.clientWidth);
+    }
+  }, [
+    activeSheetId,
+    horizontalMetrics.clientWidth,
+    sheets,
+    setTabScrollLeft,
+  ]);
 
   useEffect(() => {
     syncHorizontalMetrics();
@@ -208,6 +245,9 @@ export default function BottomTabBar({
               return (
                 <div
                   key={sheet.id}
+                  ref={(node) => {
+                    tabRefs.current[sheet.id] = node;
+                  }}
                   className={[
                     'flex h-full min-w-[148px] max-w-[260px] shrink-0 items-center border-r border-gray-300',
                     isActive

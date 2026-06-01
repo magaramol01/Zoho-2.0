@@ -2,14 +2,11 @@
 
 import type { ReactNode } from 'react';
 import { AgGridProvider } from 'ag-grid-react';
-import { AllEnterpriseModule } from 'ag-grid-enterprise';
+import { AllCommunityModule } from 'ag-grid-community';
 
 export default function GridProvider({ children }: { children: ReactNode }) {
   return (
-    <AgGridProvider
-      modules={[AllEnterpriseModule]}
-      licenseKey={process.env.NEXT_PUBLIC_AG_GRID_LICENSE_KEY}
-    >
+    <AgGridProvider modules={[AllCommunityModule]}>
       {children}
     </AgGridProvider>
   );

@@ -8,7 +8,6 @@ import {
   type FilterChangedEvent,
   type GridApi,
   type GridReadyEvent,
-  type SideBarDef,
   type ValueFormatterParams,
 } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
@@ -70,41 +69,6 @@ export default function GridSpace({
       editable: false,
       minWidth: 140,
       valueFormatter,
-    }),
-    [],
-  );
-
-  const sideBar = useMemo<SideBarDef>(
-    () => ({
-      position: 'right',
-      toolPanels: [
-        {
-          id: 'columns',
-          labelDefault: 'Columns',
-          labelKey: 'columns',
-          iconKey: 'columns',
-          toolPanel: 'agColumnsToolPanel',
-          width: 250,
-          minWidth: 220,
-          maxWidth: 320,
-          toolPanelParams: {
-            suppressRowGroups: true,
-            suppressValues: true,
-            suppressPivots: true,
-            suppressPivotMode: true,
-          },
-        },
-        {
-          id: 'filters',
-          labelDefault: 'Filters',
-          labelKey: 'filters',
-          iconKey: 'filter',
-          toolPanel: 'agFiltersToolPanel',
-          width: 280,
-          minWidth: 240,
-          maxWidth: 360,
-        },
-      ],
     }),
     [],
   );
@@ -308,7 +272,6 @@ export default function GridSpace({
           getRowId={(params) => String(params.data.id)}
           theme="legacy"
           popupParent={popupParent}
-          sideBar={sideBar}
           headerHeight={32}
           rowHeight={32}
           animateRows

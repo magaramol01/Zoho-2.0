@@ -74,21 +74,21 @@ export type TimesheetAnalyticsSummary = {
 }
 
 const statusChipClasses: Record<TimesheetAnalyticsDayStatus, string> = {
-  upcoming: "bg-slate-100 text-slate-500",
-  empty: "bg-rose-100 text-rose-700",
-  partial: "bg-amber-100 text-amber-800",
-  filled: "bg-emerald-100 text-emerald-800",
-  over: "bg-sky-100 text-sky-800",
-  weekend: "bg-slate-100 text-slate-600",
+  upcoming: "bg-gray-100 text-gray-500",
+  empty: "bg-red-100 text-red-700",
+  partial: "bg-orange-100 text-orange-800",
+  filled: "bg-green-100 text-green-800",
+  over: "bg-blue-100 text-blue-800",
+  weekend: "bg-gray-100 text-gray-600",
 }
 
 const statusPanelClasses: Record<TimesheetAnalyticsDayStatus, string> = {
-  upcoming: "border-slate-200 bg-white",
-  empty: "border-rose-200 bg-rose-50/70",
-  partial: "border-amber-200 bg-amber-50/70",
-  filled: "border-emerald-200 bg-emerald-50/80",
-  over: "border-sky-200 bg-sky-50/80",
-  weekend: "border-slate-200 bg-slate-50",
+  upcoming: "border-gray-200 bg-white",
+  empty: "border-red-200 bg-red-50",
+  partial: "border-orange-200 bg-orange-50",
+  filled: "border-green-200 bg-green-50",
+  over: "border-blue-200 bg-blue-50",
+  weekend: "border-gray-200 bg-gray-50",
 }
 
 function formatMinutesAsClock(totalMinutes: number | null | undefined) {
@@ -158,43 +158,37 @@ export default function TimesheetAnalytics({
   const totalAttentionDays = analytics?.attentionDays.length ?? 0
 
   return (
-    <div className="sheet-panel-scrollbar flex h-full min-h-0 flex-col overflow-y-auto bg-[linear-gradient(180deg,#f8fbff_0%,#f8fafc_24%,#f1f5f9_100%)]">
-      <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 px-4 py-5 md:px-6">
-        <section className="rounded-[28px] border border-white/70 bg-white/85 p-5 shadow-[0_22px_80px_rgba(15,23,42,0.08)] backdrop-blur">
+    <div className="sheet-panel-scrollbar flex h-full min-h-0 flex-col overflow-y-auto bg-gray-50 font-sans text-sm">
+      <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 px-4 py-6 md:px-6">
+        <section className="rounded border border-gray-300 bg-white p-5 shadow-sm">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="space-y-3">
+            <div className="space-y-2">
               <button
                 type="button"
                 onClick={onBackToSheets}
-                className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
+                className="inline-flex items-center gap-2 rounded border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50 hover:text-gray-900"
               >
                 <ArrowLeft className="h-4 w-4" />
                 Back to project sheet
               </button>
               <div>
-                <div className="inline-flex items-center gap-2 rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold tracking-[0.18em] text-sky-700 uppercase">
-                  <BarChart3 className="h-3.5 w-3.5" />
-                  Analytics
-                </div>
-                <h2 className="mt-3 text-2xl font-semibold tracking-tight text-slate-950 md:text-3xl">
-                  Daily 8-hour view across every synced project.
+                <h2 className="mt-3 text-xl font-semibold text-gray-900">
+                  Timesheet Analytics
                 </h2>
-                <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-                  This screen combines Zoho-synced log hours and locally added
-                  logs, then highlights which weekdays are complete, short, or
-                  still missing time.
+                <p className="mt-1 max-w-3xl text-xs text-gray-600">
+                  Daily 8-hour view combining Zoho-synced log hours and locally added logs. Highlights missing or incomplete time entries.
                 </p>
               </div>
             </div>
 
-            <label className="flex w-full max-w-sm flex-col gap-2 text-sm text-slate-600">
+            <label className="flex w-full max-w-sm flex-col gap-1 text-xs text-gray-600">
               <span className="font-medium">Track user</span>
               <div className="relative">
-                <UserRound className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <UserRound className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
                 <select
                   value={selectedUserId}
                   onChange={(event) => onUserChange(event.target.value)}
-                  className="h-11 w-full rounded-2xl border border-slate-300 bg-white pr-4 pl-10 text-slate-900 outline-none transition focus:border-sky-500"
+                  className="h-9 w-full rounded border border-gray-300 bg-white pr-4 pl-9 text-sm text-gray-900 outline-none transition focus:border-blue-500"
                 >
                   <option value="">Use current Zoho user</option>
                   {availableUsers.map((user) => (
@@ -209,7 +203,7 @@ export default function TimesheetAnalytics({
         </section>
 
         {error ? (
-          <div className="rounded-[24px] border border-rose-200 bg-rose-50 px-5 py-4 text-sm text-rose-700">
+          <div className="rounded border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800">
             {error}
           </div>
         ) : null}
@@ -219,7 +213,7 @@ export default function TimesheetAnalytics({
             {[0, 1, 2, 3].map((item) => (
               <div
                 key={item}
-                className="h-36 animate-pulse rounded-[24px] border border-slate-200 bg-white/80"
+                className="h-28 animate-pulse rounded border border-gray-200 bg-white"
               />
             ))}
           </div>
@@ -275,12 +269,12 @@ export default function TimesheetAnalytics({
             </section>
 
             {analytics.logsWithoutOwnerCount > 0 ? (
-              <section className="rounded-[24px] border border-amber-200 bg-amber-50/80 px-5 py-4 text-sm text-amber-900">
+              <section className="rounded border border-orange-300 bg-orange-50 px-4 py-3 text-sm text-orange-900">
                 <div className="flex items-start gap-3">
-                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-orange-600" />
                   <div>
                     <div className="font-semibold">Owner data is still syncing for some rows.</div>
-                    <div className="mt-1 leading-6">
+                    <div className="mt-1 text-xs">
                       {analytics.logsWithoutOwnerCount} log entr
                       {analytics.logsWithoutOwnerCount === 1 ? "y" : "ies"} in
                       this range still do not expose a user owner.
@@ -298,95 +292,95 @@ export default function TimesheetAnalytics({
                 {analytics.weeks.map((week) => (
                   <article
                     key={week.weekStart}
-                    className="rounded-[28px] border border-slate-200/80 bg-white/90 p-5 shadow-[0_12px_40px_rgba(15,23,42,0.06)]"
+                    className="rounded border border-gray-300 bg-white shadow-sm"
                   >
-                    <div className="flex flex-col gap-3 border-b border-slate-100 pb-4 lg:flex-row lg:items-center lg:justify-between">
+                    <div className="flex flex-col gap-3 border-b border-gray-200 bg-gray-50 px-5 py-3 lg:flex-row lg:items-center lg:justify-between">
                       <div>
-                        <div className="text-lg font-semibold text-slate-950">
+                        <div className="text-sm font-semibold text-gray-900">
                           {week.label}
                         </div>
-                        <div className="mt-1 text-sm text-slate-500">
+                        <div className="mt-1 text-xs text-gray-500">
                           {week.filledDays} full day
                           {week.filledDays === 1 ? "" : "s"}, {week.partialDays} partial,{" "}
                           {week.emptyDays} empty
                         </div>
                       </div>
-                      <div className="flex flex-wrap items-center gap-2 text-sm">
-                        <span className="rounded-full bg-slate-100 px-3 py-1 font-medium text-slate-700">
+                      <div className="flex flex-wrap items-center gap-2 text-xs">
+                        <span className="rounded bg-white px-2 py-1 font-medium border border-gray-200 text-gray-700">
                           Logged {formatMinutesAsClock(week.loggedMinutes)}
                         </span>
-                        <span className="rounded-full bg-sky-100 px-3 py-1 font-medium text-sky-800">
+                        <span className="rounded bg-white px-2 py-1 font-medium border border-gray-200 text-blue-700">
                           Target {formatMinutesAsClock(week.targetMinutes)}
                         </span>
-                        <span className="rounded-full bg-amber-100 px-3 py-1 font-medium text-amber-800">
+                        <span className="rounded bg-white px-2 py-1 font-medium border border-gray-200 text-red-700">
                           Missing {formatMinutesAsClock(week.missingMinutes)}
                         </span>
                       </div>
                     </div>
 
-                    <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-7">
+                    <div className="grid divide-y divide-gray-200 md:grid-cols-2 md:divide-y-0 md:divide-x xl:grid-cols-7">
                       {week.days.map((day) => (
                         <div
                           key={day.date}
-                          className={`rounded-[22px] border p-4 ${statusPanelClasses[day.status]}`}
+                          className={`p-3 transition-colors ${statusPanelClasses[day.status]}`}
                         >
-                          <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-start justify-between gap-1">
                             <div>
-                              <div className="text-xs font-semibold tracking-[0.18em] text-slate-500 uppercase">
+                              <div className="text-[10px] font-semibold text-gray-500 uppercase">
                                 {day.dayLabel}
                               </div>
-                              <div className="mt-1 text-sm font-semibold text-slate-900">
+                              <div className="text-xs font-semibold text-gray-900">
                                 {formatDate(day.date)}
                               </div>
                             </div>
                             <span
-                              className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${statusChipClasses[day.status]}`}
+                              className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${statusChipClasses[day.status]}`}
                             >
                               {getStatusLabel(day)}
                             </span>
                           </div>
 
-                          <div className="mt-4">
-                            <div className="text-2xl font-semibold tracking-tight text-slate-950">
+                          <div className="mt-3">
+                            <div className="text-xl font-bold text-gray-900">
                               {formatMinutesAsClock(day.loggedMinutes)}
                             </div>
-                            <div className="mt-1 text-xs text-slate-500">
+                            <div className="text-[10px] text-gray-500">
                               Target {formatMinutesAsClock(day.targetMinutes)}
                             </div>
                           </div>
 
-                          <div className="mt-4 text-xs leading-5 text-slate-600">
+                          <div className="mt-2 text-[11px] leading-tight text-gray-600">
                             {day.status === "partial" || day.status === "empty" ? (
-                              <span>
+                              <span className="text-red-700 font-medium">
                                 Need {formatMinutesAsClock(day.missingMinutes)} more
                               </span>
                             ) : day.status === "over" ? (
-                              <span>
+                              <span className="text-blue-700 font-medium">
                                 Over by{" "}
                                 {formatMinutesAsClock(
                                   day.loggedMinutes - day.targetMinutes
                                 )}
                               </span>
                             ) : day.status === "weekend" ? (
-                              <span>Weekend hours are shown separately.</span>
+                              <span>Weekend</span>
                             ) : day.status === "upcoming" ? (
-                              <span>This workday has not happened yet.</span>
+                              <span>Upcoming</span>
                             ) : (
-                              <span>Daily target is covered.</span>
+                              <span className="text-green-700 font-medium">Target covered</span>
                             )}
                           </div>
 
                           {day.projects.length ? (
-                            <div className="mt-4 space-y-2">
+                            <div className="mt-3 space-y-1">
                               {day.projects.slice(0, 3).map((project) => (
                                 <div
                                   key={`${day.date}-${project.projectId}`}
-                                  className="flex items-center justify-between gap-3 rounded-2xl bg-white/70 px-3 py-2 text-xs text-slate-600"
+                                  className="flex items-center justify-between gap-2 rounded bg-white/60 px-2 py-1 text-[10px] text-gray-700"
                                 >
                                   <span className="truncate">
                                     {project.projectName}
                                   </span>
-                                  <span className="shrink-0 font-semibold text-slate-900">
+                                  <span className="shrink-0 font-medium text-gray-900">
                                     {formatMinutesAsClock(project.durationMinutes)}
                                   </span>
                                 </div>
@@ -400,55 +394,53 @@ export default function TimesheetAnalytics({
                 ))}
               </div>
 
-              <aside className="space-y-5">
-                <section className="rounded-[28px] border border-slate-200/80 bg-white/90 p-5 shadow-[0_12px_40px_rgba(15,23,42,0.06)]">
-                  <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                    Days that still need hours
+              <aside className="space-y-4">
+                <section className="rounded border border-gray-300 bg-white p-4 shadow-sm">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-gray-900">
+                    <CheckCircle2 className="h-4 w-4 text-green-600" />
+                    Action Required
                   </div>
-                  <p className="mt-2 text-sm leading-6 text-slate-500">
-                    Use this as your follow-up list when you need to backfill
-                    time entries to reach the daily 8-hour policy.
+                  <p className="mt-1 text-xs text-gray-500">
+                    Days that are below the 8-hour policy.
                   </p>
 
-                  <div className="mt-4 space-y-3">
+                  <div className="mt-3 space-y-2">
                     {totalAttentionDays ? (
                       analytics.attentionDays.slice(0, 12).map((day) => (
                         <div
                           key={`attention-${day.date}`}
-                          className="rounded-[20px] border border-amber-200 bg-amber-50/70 px-4 py-3"
+                          className="rounded border border-red-200 bg-red-50 px-3 py-2"
                         >
-                          <div className="flex items-center justify-between gap-3">
+                          <div className="flex items-center justify-between gap-2">
                             <div>
-                              <div className="text-sm font-semibold text-slate-900">
+                              <div className="text-xs font-semibold text-gray-900">
                                 {formatDate(day.date)}
                               </div>
-                              <div className="text-xs text-slate-500">
+                              <div className="text-[10px] text-gray-600">
                                 Logged {formatMinutesAsClock(day.loggedMinutes)} of{" "}
                                 {formatMinutesAsClock(day.targetMinutes)}
                               </div>
                             </div>
-                            <div className="text-sm font-semibold text-amber-800">
+                            <div className="text-xs font-bold text-red-700">
                               Need {formatMinutesAsClock(day.missingMinutes)}
                             </div>
                           </div>
                         </div>
                       ))
                     ) : (
-                      <div className="rounded-[22px] border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-800">
-                        Every tracked weekday in this range already meets the
-                        8-hour target.
+                      <div className="rounded border border-green-200 bg-green-50 px-3 py-2 text-xs text-green-800">
+                        All tracked weekdays meet the target!
                       </div>
                     )}
                   </div>
                 </section>
 
-                <section className="rounded-[28px] border border-slate-200/80 bg-white/90 p-5 shadow-[0_12px_40px_rgba(15,23,42,0.06)]">
-                  <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-                    <Clock3 className="h-4 w-4 text-sky-700" />
-                    Coverage snapshot
+                <section className="rounded border border-gray-300 bg-white p-4 shadow-sm">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-gray-900">
+                    <Clock3 className="h-4 w-4 text-blue-600" />
+                    Coverage Snapshot
                   </div>
-                  <div className="mt-4 space-y-3 text-sm text-slate-600">
+                  <div className="mt-3 space-y-2 text-xs text-gray-700">
                     <MetricLine
                       label="Total logged in range"
                       value={formatMinutesAsClock(analytics.totalLoggedMinutes)}
@@ -477,8 +469,8 @@ export default function TimesheetAnalytics({
         ) : null}
 
         {!loading && !analytics && !error ? (
-          <div className="rounded-[28px] border border-dashed border-slate-300 bg-white/70 px-6 py-12 text-center text-sm text-slate-500">
-            Open Analytics to load your weekly hour summary.
+          <div className="rounded border border-dashed border-gray-300 bg-white px-6 py-10 text-center text-sm text-gray-500">
+            No analytics data loaded.
           </div>
         ) : null}
       </div>
@@ -498,17 +490,17 @@ function SummaryCard({
   helper: string
 }) {
   return (
-    <div className="rounded-[24px] border border-slate-200/80 bg-white/90 p-5 shadow-[0_12px_34px_rgba(15,23,42,0.05)]">
-      <div className="flex items-center gap-2 text-xs font-semibold tracking-[0.16em] text-slate-500 uppercase">
-        <span className="inline-flex h-8 w-8 items-center justify-center rounded-2xl bg-slate-100 text-slate-700">
+    <div className="rounded border border-gray-300 bg-white p-4 shadow-sm">
+      <div className="flex items-center gap-2 text-xs font-semibold text-gray-500 uppercase">
+        <span className="inline-flex h-6 w-6 items-center justify-center rounded bg-gray-100 text-gray-700">
           {icon}
         </span>
         {label}
       </div>
-      <div className="mt-4 text-2xl font-semibold tracking-tight text-slate-950">
+      <div className="mt-3 text-2xl font-bold text-gray-900">
         {value}
       </div>
-      <div className="mt-2 text-sm leading-6 text-slate-500">{helper}</div>
+      <div className="mt-1 text-xs text-gray-500">{helper}</div>
     </div>
   )
 }
@@ -521,9 +513,9 @@ function MetricLine({
   value: string
 }) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-2xl bg-slate-50 px-4 py-3">
+    <div className="flex items-center justify-between gap-4 rounded bg-gray-50 px-3 py-2">
       <span>{label}</span>
-      <span className="text-right font-semibold text-slate-900">{value}</span>
+      <span className="font-semibold text-gray-900">{value}</span>
     </div>
   )
 }

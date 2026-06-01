@@ -78,7 +78,6 @@ export default function GridSpace({
   const sideBar = useMemo<SideBarDef>(
     () => ({
       position: 'right',
-      defaultToolPanel: 'filters',
       toolPanels: [
         {
           id: 'columns',

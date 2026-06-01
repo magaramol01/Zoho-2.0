@@ -1499,225 +1499,195 @@ function TaskLogDrawer({
   )
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/25 backdrop-blur-[1px]">
-      <div className="flex h-full w-full max-w-2xl flex-col border-l border-slate-200 bg-white shadow-2xl">
-        <div className="flex items-start justify-between border-b border-slate-200 px-6 py-5">
-          <div>
-            <div className="text-xs font-semibold tracking-[0.24em] text-slate-400 uppercase">
+    <div className="fixed inset-y-0 right-0 z-50 flex w-[480px] flex-col border-l border-gray-300 bg-white shadow-xl font-sans text-sm">
+      <div className="flex flex-col border-b border-gray-200">
+        <div className="flex items-center justify-between px-5 py-4">
+          <div className="min-w-0 flex-1 pr-4">
+            <h2 className="truncate text-base font-medium text-gray-800">
               Log Hours
-            </div>
-            <h2 className="mt-2 text-xl font-semibold text-slate-900">
-              {task.name}
             </h2>
-            <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-slate-500">
-              <span>{task.projectName}</span>
-              <span>{task.sprintName ?? "No sprint"}</span>
-              <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 font-medium text-slate-700">
-                <Clock3 className="h-3.5 w-3.5" />
-                Total {formatMinutesAsClock(totalLoggedMinutes)}
-              </span>
+            <div className="mt-1 truncate text-sm text-gray-600">
+              {task.name}
+            </div>
+            <div className="mt-1 text-xs text-gray-500">
+              {task.projectName} • Total logged: {formatMinutesAsClock(totalLoggedMinutes)}
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full border border-slate-300 p-2 text-slate-500 hover:border-slate-400 hover:text-slate-800"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded text-gray-400 hover:bg-gray-100 hover:text-gray-600"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
+      </div>
 
-        <div className="border-b border-slate-200 bg-slate-50 px-6 py-4">
-          <div className="grid gap-3 md:grid-cols-[1fr_140px_1fr_100px_auto]">
-            <label className="flex flex-col gap-2 text-sm text-slate-600">
-              <span className="font-medium">Date</span>
-              <input
-                type="date"
-                value={newLogDraft.date}
-                onChange={(event) =>
-                  setNewLogDraft((current) => ({
-                    ...current,
-                    date: event.target.value,
-                  }))
-                }
-                className="h-10 rounded-xl border border-slate-300 bg-white px-3 text-slate-800 outline-none focus:border-blue-500"
-              />
-            </label>
-            <label className="flex flex-col gap-2 text-sm text-slate-600">
-              <span className="font-medium">Logged</span>
-              <input
-                type="time"
-                step={300}
-                value={newLogDraft.durationClock}
-                onChange={(event) =>
-                  setNewLogDraft((current) => ({
-                    ...current,
-                    durationClock: event.target.value,
-                  }))
-                }
-                className="h-10 rounded-xl border border-slate-300 bg-white px-3 text-slate-800 outline-none focus:border-blue-500"
-              />
-            </label>
-            <label className="flex flex-col gap-2 text-sm text-slate-600">
-              <span className="font-medium">Log as</span>
-              <select
-                value={newLogDraft.userId}
-                onChange={(event) =>
-                  setNewLogDraft((current) => ({
-                    ...current,
-                    userId: event.target.value,
-                  }))
-                }
-                className="h-10 rounded-xl border border-slate-300 bg-white px-3 text-slate-800 outline-none focus:border-blue-500"
-              >
-                {assigneeOptions.map((assignee) => (
-                  <option key={assignee.id} value={assignee.id}>
-                    {assignee.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="flex items-end gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700">
-              <input
-                type="checkbox"
-                checked={newLogDraft.billable}
-                onChange={(event) =>
-                  setNewLogDraft((current) => ({
-                    ...current,
-                    billable: event.target.checked,
-                  }))
-                }
-              />
-              Billable
-            </label>
-            <button
-              type="button"
-              onClick={onAddLog}
-              disabled={addingLog}
-              className="inline-flex h-10 items-center justify-center gap-2 self-end rounded-xl bg-slate-950 px-4 text-sm font-medium text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+      <div className="flex flex-col border-b border-gray-200 bg-gray-50 px-5 py-4">
+        <div className="grid grid-cols-2 gap-4">
+          <label className="flex flex-col gap-1">
+            <span className="text-xs font-medium text-gray-600">Date</span>
+            <input
+              type="date"
+              value={newLogDraft.date}
+              onChange={(event) =>
+                setNewLogDraft((current) => ({
+                  ...current,
+                  date: event.target.value,
+                }))
+              }
+              className="h-8 rounded border border-gray-300 bg-white px-2 text-sm text-gray-800 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-xs font-medium text-gray-600">Time (HH:MM)</span>
+            <input
+              type="time"
+              step={300}
+              value={newLogDraft.durationClock}
+              onChange={(event) =>
+                setNewLogDraft((current) => ({
+                  ...current,
+                  durationClock: event.target.value,
+                }))
+              }
+              className="h-8 rounded border border-gray-300 bg-white px-2 text-sm text-gray-800 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            />
+          </label>
+          <label className="col-span-2 flex flex-col gap-1">
+            <span className="text-xs font-medium text-gray-600">User</span>
+            <select
+              value={newLogDraft.userId}
+              onChange={(event) =>
+                setNewLogDraft((current) => ({
+                  ...current,
+                  userId: event.target.value,
+                }))
+              }
+              className="h-8 rounded border border-gray-300 bg-white px-2 text-sm text-gray-800 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             >
-              <Plus className="h-4 w-4" />
-              {addingLog ? "Adding..." : "Add Log"}
-            </button>
-          </div>
+              {assigneeOptions.map((assignee) => (
+                <option key={assignee.id} value={assignee.id}>
+                  {assignee.name}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
+        <div className="mt-4 flex items-center justify-between">
+          <label className="flex items-center gap-2 text-sm text-gray-700">
+            <input
+              type="checkbox"
+              checked={newLogDraft.billable}
+              onChange={(event) =>
+                setNewLogDraft((current) => ({
+                  ...current,
+                  billable: event.target.checked,
+                }))
+              }
+              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            Billable
+          </label>
+          <button
+            type="button"
+            onClick={onAddLog}
+            disabled={addingLog}
+            className="inline-flex h-8 items-center justify-center gap-1.5 rounded bg-blue-600 px-4 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            {addingLog ? "Saving..." : "Add log"}
+          </button>
+        </div>
+      </div>
 
-        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-3 text-sm text-slate-500">
-          <div className="inline-flex items-center gap-2">
-            <CalendarDays className="h-4 w-4" />
-            Grouped by date with editable hours
-          </div>
+      <div className="flex flex-1 flex-col overflow-hidden bg-white">
+        <div className="flex items-center justify-between border-b border-gray-200 px-5 py-2">
+          <span className="text-xs font-medium tracking-wider text-gray-500 uppercase">
+            History
+          </span>
           <button
             type="button"
             onClick={onRefresh}
-            className="rounded-full border border-slate-300 px-3 py-1 text-slate-600 hover:border-slate-400 hover:text-slate-900"
+            className="text-xs font-medium text-blue-600 hover:text-blue-800"
           >
             Refresh
           </button>
         </div>
-
-        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
           {error ? (
-            <div className="mb-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+            <div className="mb-4 rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">
               {error}
             </div>
           ) : null}
 
           {loading ? (
-            <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center text-slate-500">
-              Loading task log hours...
+            <div className="py-8 text-center text-sm text-gray-500">
+              Loading log history...
             </div>
-          ) : groupedLogs.length ? (
-            <div className="space-y-5">
+          ) : groupedLogs.length > 0 ? (
+            <div className="space-y-6">
               {groupedLogs.map((group) => (
-                <section
-                  key={group.date}
-                  className="rounded-3xl border border-slate-200 bg-white shadow-sm"
-                >
-                  <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-                    <div className="text-sm font-semibold text-slate-900">
-                      {formatHumanDate(group.date)}
-                    </div>
-                    <div className="rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-700">
-                      {formatMinutesAsClock(group.totalMinutes)}
-                    </div>
+                <div key={group.date} className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between text-xs font-medium text-gray-500">
+                    <span>{formatHumanDate(group.date)}</span>
+                    <span>{formatMinutesAsClock(group.totalMinutes)} logged</span>
                   </div>
-
-                  <div className="divide-y divide-slate-100">
+                  <div className="flex flex-col divide-y divide-gray-100 rounded border border-gray-200">
                     {group.entries.map((log) => (
-                      <div
-                        key={log.id}
-                        className="grid gap-3 px-5 py-4 md:grid-cols-[1fr_130px_90px_auto]"
-                      >
-                        <label className="flex flex-col gap-2 text-sm text-slate-600">
-                          <span className="font-medium">Date</span>
+                      <div key={log.id} className="p-3">
+                        <div className="flex items-center gap-3">
                           <input
                             type="date"
                             value={log.date}
                             onChange={(event) =>
-                              onLogFieldChange(
-                                log.id,
-                                "date",
-                                event.target.value
-                              )
+                              onLogFieldChange(log.id, "date", event.target.value)
                             }
-                            className="h-10 rounded-xl border border-slate-300 bg-white px-3 text-slate-800 outline-none focus:border-blue-500"
+                            className="h-8 flex-1 rounded border border-gray-300 bg-white px-2 text-sm text-gray-800 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                           />
-                        </label>
-                        <label className="flex flex-col gap-2 text-sm text-slate-600">
-                          <span className="font-medium">Logged</span>
                           <input
                             type="time"
                             step={300}
                             value={formatMinutesAsClock(log.durationMinutes)}
                             onChange={(event) => {
-                              const nextMinutes = parseClockToMinutes(
-                                event.target.value
-                              )
+                              const nextMinutes = parseClockToMinutes(event.target.value)
                               if (nextMinutes !== null) {
-                                onLogFieldChange(
-                                  log.id,
-                                  "durationMinutes",
-                                  nextMinutes
-                                )
+                                onLogFieldChange(log.id, "durationMinutes", nextMinutes)
                               }
                             }}
-                            className="h-10 rounded-xl border border-slate-300 bg-white px-3 text-slate-800 outline-none focus:border-blue-500"
+                            className="h-8 w-24 rounded border border-gray-300 bg-white px-2 text-sm text-gray-800 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                           />
-                        </label>
-                        <label className="flex items-end gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700">
-                          <input
-                            type="checkbox"
-                            checked={log.billable}
-                            onChange={(event) =>
-                              onLogFieldChange(
-                                log.id,
-                                "billable",
-                                event.target.checked
-                              )
-                            }
-                          />
-                          Billable
-                        </label>
-                        <div className="flex items-end">
+                        </div>
+                        <div className="mt-3 flex items-center justify-between">
+                          <label className="flex items-center gap-2 text-sm text-gray-700">
+                            <input
+                              type="checkbox"
+                              checked={log.billable}
+                              onChange={(event) =>
+                                onLogFieldChange(log.id, "billable", event.target.checked)
+                              }
+                              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            />
+                            Billable
+                          </label>
                           <button
                             type="button"
                             onClick={() => onSaveLog(log.id)}
                             disabled={Boolean(savingLogIds[log.id])}
-                            className="inline-flex h-10 w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 hover:border-slate-400 hover:text-slate-900 disabled:cursor-not-allowed disabled:bg-slate-100"
+                            className="inline-flex h-7 items-center justify-center rounded border border-gray-300 bg-white px-3 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
                           >
-                            {savingLogIds[log.id] ? "Saving..." : "Save"}
+                            {savingLogIds[log.id] ? "Saving..." : "Update"}
                           </button>
                         </div>
                       </div>
                     ))}
                   </div>
-                </section>
+                </div>
               ))}
             </div>
           ) : (
-            <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center text-slate-500">
-              No log hours yet for this task. Add the first entry above.
+            <div className="py-8 text-center text-sm text-gray-500">
+              No log hours recorded yet.
             </div>
           )}
         </div>
@@ -1725,3 +1695,4 @@ function TaskLogDrawer({
     </div>
   )
 }
+

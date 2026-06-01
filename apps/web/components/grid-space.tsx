@@ -3,11 +3,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   type BodyScrollEvent,
+  type CellKeyDownEvent,
   type CellValueChangedEvent,
   type ColDef,
   type FilterChangedEvent,
   type GridApi,
   type GridReadyEvent,
+  type SideBarDef,
   type ValueFormatterParams,
 } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
@@ -69,6 +71,42 @@ export default function GridSpace({
       editable: false,
       minWidth: 140,
       valueFormatter,
+    }),
+    [],
+  );
+
+  const sideBar = useMemo<SideBarDef>(
+    () => ({
+      position: 'right',
+      defaultToolPanel: 'filters',
+      toolPanels: [
+        {
+          id: 'columns',
+          labelDefault: 'Columns',
+          labelKey: 'columns',
+          iconKey: 'columns',
+          toolPanel: 'agColumnsToolPanel',
+          width: 250,
+          minWidth: 220,
+          maxWidth: 320,
+          toolPanelParams: {
+            suppressRowGroups: true,
+            suppressValues: true,
+            suppressPivots: true,
+            suppressPivotMode: true,
+          },
+        },
+        {
+          id: 'filters',
+          labelDefault: 'Filters',
+          labelKey: 'filters',
+          iconKey: 'filter',
+          toolPanel: 'agFiltersToolPanel',
+          width: 280,
+          minWidth: 240,
+          maxWidth: 360,
+        },
+      ],
     }),
     [],
   );
@@ -254,6 +292,36 @@ export default function GridSpace({
     [filterStorageKey],
   );
 
+  const handleCellKeyDown = useCallback(
+    (event: CellKeyDownEvent<GridRow>) => {
+      if (!(event.event instanceof KeyboardEvent)) {
+        return;
+      }
+
+      const keyboardEvent = event.event;
+
+      if (
+        keyboardEvent.defaultPrevented ||
+        (!keyboardEvent.ctrlKey && !keyboardEvent.metaKey) ||
+        keyboardEvent.key.toLowerCase() !== 'c'
+      ) {
+        return;
+      }
+
+      const target = keyboardEvent.target;
+      if (
+        target instanceof HTMLElement &&
+        ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)
+      ) {
+        return;
+      }
+
+      keyboardEvent.preventDefault();
+      event.api.copyToClipboard();
+    },
+    [],
+  );
+
   const handleGridContainerRef = useCallback((node: HTMLDivElement | null) => {
     gridRootRef.current = node;
     setPopupParent(node);
@@ -272,11 +340,14 @@ export default function GridSpace({
           getRowId={(params) => String(params.data.id)}
           theme="legacy"
           popupParent={popupParent}
+          sideBar={sideBar}
+          cellSelection={true}
           headerHeight={32}
           rowHeight={32}
           animateRows
           singleClickEdit
           onGridReady={handleGridReady}
+          onCellKeyDown={handleCellKeyDown}
           onFilterChanged={handleFilterChanged}
           onBodyScroll={handleBodyScroll}
           onCellValueChanged={onCellValueChanged}

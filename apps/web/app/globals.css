@@ -159,7 +159,10 @@ button {
 
 .sheet-view-scrollbar,
 .sheet-tabs-scroll,
-.sheet-panel-scrollbar {
+.sheet-panel-scrollbar,
+.sheet-grid .ag-body-vertical-scroll-viewport,
+.sheet-grid .ag-body-horizontal-scroll-viewport,
+.sheet-grid .ag-virtual-list-viewport {
   overscroll-behavior-x: contain;
   scrollbar-width: thin;
   scrollbar-color: #cbd5e1 #f8fafc;
@@ -174,7 +177,10 @@ button {
 .sheet-panel-scrollbar::-webkit-scrollbar,
 .sheet-grid .ag-side-bar::-webkit-scrollbar,
 .sheet-grid .ag-tool-panel-wrapper::-webkit-scrollbar,
-.sheet-grid .ag-tool-panel-wrapper *::-webkit-scrollbar {
+.sheet-grid .ag-tool-panel-wrapper *::-webkit-scrollbar,
+.sheet-grid .ag-body-vertical-scroll-viewport::-webkit-scrollbar,
+.sheet-grid .ag-body-horizontal-scroll-viewport::-webkit-scrollbar,
+.sheet-grid .ag-virtual-list-viewport::-webkit-scrollbar {
   width: 10px;
   height: 10px;
 }
@@ -184,7 +190,10 @@ button {
 .sheet-panel-scrollbar::-webkit-scrollbar-track,
 .sheet-grid .ag-side-bar::-webkit-scrollbar-track,
 .sheet-grid .ag-tool-panel-wrapper::-webkit-scrollbar-track,
-.sheet-grid .ag-tool-panel-wrapper *::-webkit-scrollbar-track {
+.sheet-grid .ag-tool-panel-wrapper *::-webkit-scrollbar-track,
+.sheet-grid .ag-body-vertical-scroll-viewport::-webkit-scrollbar-track,
+.sheet-grid .ag-body-horizontal-scroll-viewport::-webkit-scrollbar-track,
+.sheet-grid .ag-virtual-list-viewport::-webkit-scrollbar-track {
   background: #f8fafc;
 }
 
@@ -193,7 +202,10 @@ button {
 .sheet-panel-scrollbar::-webkit-scrollbar-thumb,
 .sheet-grid .ag-side-bar::-webkit-scrollbar-thumb,
 .sheet-grid .ag-tool-panel-wrapper::-webkit-scrollbar-thumb,
-.sheet-grid .ag-tool-panel-wrapper *::-webkit-scrollbar-thumb {
+.sheet-grid .ag-tool-panel-wrapper *::-webkit-scrollbar-thumb,
+.sheet-grid .ag-body-vertical-scroll-viewport::-webkit-scrollbar-thumb,
+.sheet-grid .ag-body-horizontal-scroll-viewport::-webkit-scrollbar-thumb,
+.sheet-grid .ag-virtual-list-viewport::-webkit-scrollbar-thumb {
   border: 2px solid #f8fafc;
   border-radius: 999px;
   background: #cbd5e1;
@@ -204,6 +216,9 @@ button {
 .sheet-panel-scrollbar::-webkit-scrollbar-thumb:hover,
 .sheet-grid .ag-side-bar::-webkit-scrollbar-thumb:hover,
 .sheet-grid .ag-tool-panel-wrapper::-webkit-scrollbar-thumb:hover,
-.sheet-grid .ag-tool-panel-wrapper *::-webkit-scrollbar-thumb:hover {
+.sheet-grid .ag-tool-panel-wrapper *::-webkit-scrollbar-thumb:hover,
+.sheet-grid .ag-body-vertical-scroll-viewport::-webkit-scrollbar-thumb:hover,
+.sheet-grid .ag-body-horizontal-scroll-viewport::-webkit-scrollbar-thumb:hover,
+.sheet-grid .ag-virtual-list-viewport::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }

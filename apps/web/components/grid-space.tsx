@@ -22,6 +22,7 @@ interface GridSpaceProps {
   rowData: GridRow[];
   columnDefs: ColDef<GridRow>[];
   filterStorageKey: string | null;
+  columnStorageKey?: string | null;
   onCellValueChanged?: (event: CellValueChangedEvent<GridRow>) => void;
 }
 
@@ -49,6 +50,7 @@ export default function GridSpace({
   rowData,
   columnDefs,
   filterStorageKey,
+  columnStorageKey,
   onCellValueChanged,
 }: GridSpaceProps) {
   const [horizontalMetrics, setHorizontalMetrics] = useState<HorizontalMetrics>(
@@ -268,13 +270,31 @@ export default function GridSpace({
     }
   }, [filterStorageKey]);
 
+  const restoreColumnState = useCallback((api: GridApi<GridRow>) => {
+    if (!columnStorageKey || typeof window === 'undefined') {
+      return;
+    }
+
+    try {
+      const savedState = window.localStorage.getItem(columnStorageKey);
+      if (!savedState) {
+        return;
+      }
+
+      api.applyColumnState({ state: JSON.parse(savedState), applyOrder: true });
+    } catch {
+      window.localStorage.removeItem(columnStorageKey);
+    }
+  }, [columnStorageKey]);
+
   const handleGridReady = useCallback(
     (event: GridReadyEvent<GridRow>) => {
       gridApiRef.current = event.api;
       restoreFilterModel(event.api);
+      restoreColumnState(event.api);
       syncHorizontalMetrics();
     },
-    [restoreFilterModel, syncHorizontalMetrics],
+    [restoreFilterModel, restoreColumnState, syncHorizontalMetrics],
   );
 
   const handleFilterChanged = useCallback(
@@ -290,6 +310,15 @@ export default function GridSpace({
     },
     [filterStorageKey],
   );
+
+  const handleColumnStateChanged = useCallback((event: any) => {
+    if (!columnStorageKey || typeof window === 'undefined') {
+      return;
+    }
+
+    const state = event.api.getColumnState();
+    window.localStorage.setItem(columnStorageKey, JSON.stringify(state));
+  }, [columnStorageKey]);
 
   const handleCellKeyDown = useCallback(
     (event: CellKeyDownEvent<GridRow>) => {
@@ -348,6 +377,11 @@ export default function GridSpace({
           onGridReady={handleGridReady}
           onCellKeyDown={handleCellKeyDown}
           onFilterChanged={handleFilterChanged}
+          onColumnMoved={handleColumnStateChanged}
+          onColumnPinned={handleColumnStateChanged}
+          onColumnVisible={handleColumnStateChanged}
+          onColumnResized={handleColumnStateChanged}
+          onSortChanged={handleColumnStateChanged}
           onBodyScroll={handleBodyScroll}
           onCellValueChanged={onCellValueChanged}
           onFirstDataRendered={() => syncHorizontalMetrics()}

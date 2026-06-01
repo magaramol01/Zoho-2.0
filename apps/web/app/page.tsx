@@ -15,6 +15,7 @@ import {
   MessageSquare,
   MoreVertical,
   Plus,
+  RefreshCw,
   Share,
   X,
 } from "lucide-react"
@@ -228,6 +229,7 @@ export default function Page() {
   const [tasksLoading, setTasksLoading] = useState(false)
   const [dataError, setDataError] = useState<string | null>(null)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const [syncingProject, setSyncingProject] = useState(false)
 
   const [logPanelTaskId, setLogPanelTaskId] = useState<string | null>(null)
   const [logsByTaskId, setLogsByTaskId] = useState<Record<string, TaskLog[]>>(
@@ -597,6 +599,36 @@ export default function Page() {
       cancelled = true
     }
   }, [activeView, analyticsUserId, bootstrap?.authenticated])
+
+  const handleSyncProject = useCallback(async () => {
+    if (!activeProjectId || syncingProject || activeView !== "sheet") {
+      return
+    }
+
+    setSyncingProject(true)
+
+    try {
+      const params = new URLSearchParams({ projectId: activeProjectId })
+      const response = await fetch(`/api/spreadsheet?${params.toString()}`, {
+        cache: "no-store",
+      })
+      
+      if (!response.ok) {
+        throw new Error("Failed to sync project.")
+      }
+      
+      const payload = (await response.json()) as SpreadsheetPayload
+
+      setTasksByProjectId((current) => ({
+        ...current,
+        [activeProjectId]: payload.tasks ?? [],
+      }))
+    } catch {
+      // Keep existing data if sync fails silently
+    } finally {
+      setSyncingProject(false)
+    }
+  }, [activeProjectId, syncingProject, activeView])
 
   const activeProject = useMemo(
     () =>
@@ -1307,6 +1339,10 @@ export default function Page() {
           </div>
 
           <div className="flex items-center gap-4">
+            <RefreshCw 
+              onClick={handleSyncProject}
+              className={`h-5 w-5 cursor-pointer text-gray-600 hover:text-blue-600 transition-transform ${syncingProject ? 'animate-spin text-blue-600' : ''}`} 
+            />
             <MessageSquare className="h-5 w-5 cursor-pointer text-gray-600" />
             <MoreVertical className="h-5 w-5 cursor-pointer text-gray-600" />
             <div className="flex h-9 cursor-pointer items-center gap-2 rounded-full bg-blue-100 px-5 font-medium text-blue-700 hover:bg-blue-200">
@@ -1395,6 +1431,7 @@ export default function Page() {
                       ? `zoho-power-grid:filters:${activeProject.id}`
                       : null
                   }
+                  columnStorageKey="zoho-power-grid:columns-state"
                 />
               )}
             </div>
@@ -1411,27 +1448,26 @@ export default function Page() {
               />
             ) : null}
           </div>
+          {selectedTask && activeView === "sheet" ? (
+            <TaskLogDrawer
+              task={selectedTask}
+              logs={selectedTaskLogs}
+              loading={logPanelLoading}
+              error={logPanelError}
+              onClose={closeLogPanel}
+              onRefresh={() => void fetchTaskLogs(selectedTask.id)}
+              onLogFieldChange={handleLogFieldChange}
+              onSaveLog={handleSaveLog}
+              savingLogIds={savingLogIds}
+              assigneeOptions={selectedTaskAssignees}
+              newLogDraft={newLogDraft}
+              setNewLogDraft={setNewLogDraft}
+              onAddLog={() => void handleAddLog()}
+              addingLog={addingLog}
+            />
+          ) : null}
         </div>
       </main>
-
-      {selectedTask && activeView === "sheet" ? (
-        <TaskLogDrawer
-          task={selectedTask}
-          logs={selectedTaskLogs}
-          loading={logPanelLoading}
-          error={logPanelError}
-          onClose={closeLogPanel}
-          onRefresh={() => void fetchTaskLogs(selectedTask.id)}
-          onLogFieldChange={handleLogFieldChange}
-          onSaveLog={handleSaveLog}
-          savingLogIds={savingLogIds}
-          assigneeOptions={selectedTaskAssignees}
-          newLogDraft={newLogDraft}
-          setNewLogDraft={setNewLogDraft}
-          onAddLog={() => void handleAddLog()}
-          addingLog={addingLog}
-        />
-      ) : null}
     </>
   )
 }
@@ -1499,7 +1535,7 @@ function TaskLogDrawer({
   )
 
   return (
-    <div className="fixed inset-y-0 right-0 z-50 flex w-[480px] flex-col border-l border-gray-300 bg-white shadow-xl font-sans text-sm">
+    <div className="flex w-[480px] shrink-0 flex-col border-l border-gray-300 bg-white font-sans text-sm">
       <div className="flex flex-col border-b border-gray-200">
         <div className="flex items-center justify-between px-5 py-4">
           <div className="min-w-0 flex-1 pr-4">

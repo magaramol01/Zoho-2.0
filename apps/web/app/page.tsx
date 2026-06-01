@@ -975,7 +975,7 @@ export default function Page() {
                   currentValue
                 )
               }
-              className="h-7 min-w-[170px] rounded border border-slate-300 bg-white px-2 text-sm text-slate-700 outline-none focus:border-blue-500"
+              className="block h-7 w-full min-w-0 rounded-none border-0 bg-transparent px-2 text-sm text-slate-700 outline-none focus:outline-none"
             >
               {activeStatusOptions.map((status) => (
                 <option key={status.id} value={status.name}>

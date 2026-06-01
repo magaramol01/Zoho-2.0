@@ -4,8 +4,8 @@ const path = require('path');
 const { spawn } = require('child_process');
 
 const isDev = !app.isPackaged;
-const WEB_PORT = 3000;
-const API_PORT = 3001;
+const WEB_PORT = 4000;
+const API_PORT = 4001;
 
 let webProcess = null;
 let apiProcess = null;

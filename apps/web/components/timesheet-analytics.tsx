@@ -2,12 +2,11 @@
 
 import type { ReactNode } from "react"
 import {
-  AlertTriangle,
+  AlertCircle,
   ArrowLeft,
-  BarChart3,
-  CalendarRange,
+  Calendar,
   CheckCircle2,
-  Clock3,
+  Clock,
   UserRound,
 } from "lucide-react"
 
@@ -158,9 +157,9 @@ export default function TimesheetAnalytics({
   const totalAttentionDays = analytics?.attentionDays.length ?? 0
 
   return (
-    <div className="sheet-panel-scrollbar flex h-full min-h-0 flex-col overflow-y-auto bg-gray-50 font-sans text-sm">
-      <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 px-4 py-6 md:px-6">
-        <section className="rounded border border-gray-300 bg-white p-5 shadow-sm">
+    <div className="flex h-full min-h-0 flex-col bg-gray-50 font-sans text-sm">
+      <div className="mx-auto flex w-full flex-1 min-h-0 flex-col gap-6 px-4 py-6 md:px-8 lg:px-10">
+        <section className="shrink-0 rounded border border-gray-300 bg-white p-5 shadow-sm mb-2">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="space-y-2">
               <button
@@ -171,112 +170,105 @@ export default function TimesheetAnalytics({
                 <ArrowLeft className="h-4 w-4" />
                 Back to project sheet
               </button>
-              <div>
-                <h2 className="mt-3 text-xl font-semibold text-gray-900">
+              <div className="mt-2">
+                <h2 className="text-xl font-semibold text-gray-900">
                   Timesheet Analytics
                 </h2>
-                <p className="mt-1 max-w-3xl text-xs text-gray-600">
+                <p className="mt-1 max-w-3xl text-xs text-gray-500">
                   Daily 8-hour view combining Zoho-synced log hours and locally added logs. Highlights missing or incomplete time entries.
                 </p>
               </div>
             </div>
 
-            <label className="flex w-full max-w-sm flex-col gap-1 text-xs text-gray-600">
-              <span className="font-medium">Track user</span>
-              <div className="relative">
-                <UserRound className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                <select
-                  value={selectedUserId}
-                  onChange={(event) => onUserChange(event.target.value)}
-                  className="h-9 w-full rounded border border-gray-300 bg-white pr-4 pl-9 text-sm text-gray-900 outline-none transition focus:border-blue-500"
-                >
-                  <option value="">Use current Zoho user</option>
-                  {availableUsers.map((user) => (
-                    <option key={user.id} value={user.id}>
-                      {user.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </label>
+            <div className="w-full lg:w-64">
+              <label className="flex flex-col gap-1.5">
+                <span className="text-xs font-medium text-gray-600">Track user</span>
+                <div className="relative">
+                  <UserRound className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-500" />
+                  <select
+                    value={selectedUserId}
+                    onChange={(event) => onUserChange(event.target.value)}
+                    className="h-9 w-full rounded border border-gray-300 bg-white pr-8 pl-9 text-sm text-gray-900 outline-none transition focus:border-blue-500 appearance-none"
+                  >
+                    <option value="">Use current Zoho user</option>
+                    {availableUsers.map((user) => (
+                      <option key={user.id} value={user.id}>
+                        {user.name}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                    <svg className="h-4 w-4 fill-current" viewBox="0 0 20 20">
+                      <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" fillRule="evenodd" />
+                    </svg>
+                  </div>
+                </div>
+              </label>
+            </div>
           </div>
         </section>
 
         {error ? (
-          <div className="rounded border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800">
+          <div className="shrink-0 rounded border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800">
             {error}
           </div>
-        ) : null}
-
-        {loading ? (
-          <div className="grid gap-4 xl:grid-cols-4">
-            {[0, 1, 2, 3].map((item) => (
-              <div
-                key={item}
-                className="h-28 animate-pulse rounded border border-gray-200 bg-white"
-              />
-            ))}
+        ) : loading ? (
+          <div className="flex flex-1 items-center justify-center">
+            <div className="flex flex-col items-center gap-3">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
+              <p className="text-sm font-medium text-gray-500">
+                Syncing timesheet data...
+              </p>
+            </div>
           </div>
-        ) : null}
-
-        {!loading && analytics ? (
+        ) : analytics ? (
           <>
-            <section className="grid gap-4 xl:grid-cols-4">
+            <section className="shrink-0 grid grid-cols-2 gap-4 lg:grid-cols-4 lg:gap-6">
               <SummaryCard
+                title="Tracking"
+                value={
+                  availableUsers.find((u) => u.id === selectedUserId)?.name ||
+                  "Current User"
+                }
+                helper={`User ID ${selectedUserId}`}
                 icon={<UserRound className="h-4 w-4" />}
-                label="Tracking"
-                value={analytics.userName ?? "Current Zoho user"}
-                helper={
-                  analytics.userId
-                    ? `User ID ${analytics.userId}`
-                    : "Using the current authenticated Zoho profile"
-                }
               />
               <SummaryCard
-                icon={<Clock3 className="h-4 w-4" />}
-                label="This week"
-                value={
-                  currentWeek
-                    ? formatMinutesAsClock(currentWeek.loggedMinutes)
-                    : "00:00"
-                }
-                helper={
-                  currentWeek
-                    ? `${formatMinutesAsClock(currentWeek.targetMinutes)} expected so far`
-                    : "No week data yet"
-                }
+                title="This week"
+                value={formatMinutesAsClock(currentWeek?.loggedMinutes ?? 0)}
+                helper={`${formatMinutesAsClock(currentWeek?.targetMinutes ?? 0)} expected so far`}
+                icon={<Clock className="h-4 w-4" />}
               />
               <SummaryCard
-                icon={<AlertTriangle className="h-4 w-4" />}
-                label="Still missing"
-                value={
-                  currentWeek
-                    ? formatMinutesAsClock(currentWeek.missingMinutes)
-                    : "00:00"
-                }
-                helper={
-                  currentWeek
-                    ? `${currentWeek.partialDays + currentWeek.emptyDays} weekday(s) below policy`
-                    : "Nothing to review"
-                }
+                title="Still missing"
+                value={formatMinutesAsClock(
+                  analytics.weeks.reduce(
+                    (acc, w) => acc + w.missingMinutes,
+                    0
+                  )
+                )}
+                helper={`${totalAttentionDays} weekday(s) below policy`}
+                icon={<AlertCircle className="h-4 w-4" />}
+                isError={totalAttentionDays > 0}
               />
               <SummaryCard
-                icon={<CalendarRange className="h-4 w-4" />}
-                label="Weeks checked"
-                value={String(analytics.selectedWeekCount)}
-                helper={`${analytics.matchedLogCount} matched log entries in this window`}
+                title="Weeks checked"
+                value={analytics.weeks.length.toString()}
+                helper={`${analytics.includedLogsCount} matched log entries in this window`}
+                icon={<Calendar className="h-4 w-4" />}
               />
             </section>
 
-            {analytics.logsWithoutOwnerCount > 0 ? (
-              <section className="rounded border border-orange-300 bg-orange-50 px-4 py-3 text-sm text-orange-900">
+            {analytics.includedUnknownOwnerLogs > 0 ? (
+              <section className="shrink-0 rounded border border-blue-200 bg-blue-50 p-4">
                 <div className="flex items-start gap-3">
-                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-orange-600" />
+                  <AlertCircle className="mt-0.5 h-5 w-5 text-blue-600" />
                   <div>
-                    <div className="font-semibold">Owner data is still syncing for some rows.</div>
-                    <div className="mt-1 text-xs">
-                      {analytics.logsWithoutOwnerCount} log entr
-                      {analytics.logsWithoutOwnerCount === 1 ? "y" : "ies"} in
+                    <h3 className="text-sm font-semibold text-blue-900">
+                      Unowned Logs Detected
+                    </h3>
+                    <div className="mt-1 text-xs text-blue-800">
+                      We found {analytics.includedUnknownOwnerLogs} logs that in
                       this range still do not expose a user owner.
                       {analytics.includedUnknownOwnerLogs
                         ? " They are currently counted because this view is tracking the active Zoho user."
@@ -287,182 +279,212 @@ export default function TimesheetAnalytics({
               </section>
             ) : null}
 
-            <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
-              <div className="space-y-5">
-                {analytics.weeks.map((week) => (
-                  <article
-                    key={week.weekStart}
-                    className="rounded border border-gray-300 bg-white shadow-sm"
-                  >
-                    <div className="flex flex-col gap-3 border-b border-gray-200 bg-gray-50 px-5 py-3 lg:flex-row lg:items-center lg:justify-between">
-                      <div>
-                        <div className="text-sm font-semibold text-gray-900">
-                          {week.label}
-                        </div>
-                        <div className="mt-1 text-xs text-gray-500">
-                          {week.filledDays} full day
-                          {week.filledDays === 1 ? "" : "s"}, {week.partialDays} partial,{" "}
-                          {week.emptyDays} empty
-                        </div>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-2 text-xs">
-                        <span className="rounded bg-white px-2 py-1 font-medium border border-gray-200 text-gray-700">
-                          Logged {formatMinutesAsClock(week.loggedMinutes)}
-                        </span>
-                        <span className="rounded bg-white px-2 py-1 font-medium border border-gray-200 text-blue-700">
-                          Target {formatMinutesAsClock(week.targetMinutes)}
-                        </span>
-                        <span className="rounded bg-white px-2 py-1 font-medium border border-gray-200 text-red-700">
-                          Missing {formatMinutesAsClock(week.missingMinutes)}
-                        </span>
-                      </div>
-                    </div>
+            <section className="flex-1 min-h-0 grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
+              <div className="flex flex-col min-h-0">
+                <div className="shrink-0 mb-3 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                  Weekly Breakdown
+                </div>
+                <div className="flex-1 overflow-y-auto pr-2 sheet-panel-scrollbar space-y-5">
+                  {analytics.weeks.map((week) => {
+                    const progressPercentage = week.targetMinutes > 0
+                      ? Math.min(100, Math.round((week.loggedMinutes / week.targetMinutes) * 100))
+                      : 0
 
-                    <div className="grid divide-y divide-gray-200 md:grid-cols-2 md:divide-y-0 md:divide-x xl:grid-cols-7">
-                      {week.days.map((day) => (
-                        <div
-                          key={day.date}
-                          className={`p-3 transition-colors ${statusPanelClasses[day.status]}`}
-                        >
-                          <div className="flex items-start justify-between gap-1">
-                            <div>
-                              <div className="text-[10px] font-semibold text-gray-500 uppercase">
-                                {day.dayLabel}
-                              </div>
-                              <div className="text-xs font-semibold text-gray-900">
-                                {formatDate(day.date)}
-                              </div>
+                    return (
+                      <article
+                        key={week.weekStart}
+                        className="rounded border border-gray-300 bg-white shadow-sm overflow-hidden"
+                      >
+                        <div className="flex flex-col gap-3 px-5 py-4 lg:flex-row lg:items-start lg:justify-between">
+                          <div>
+                            <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                              Week {week.label.split("·")[0].replace("Week", "").trim()}
                             </div>
-                            <span
-                              className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${statusChipClasses[day.status]}`}
-                            >
-                              {getStatusLabel(day)}
+                            <div className="text-lg font-semibold text-gray-900 leading-tight">
+                              {week.label.split("·")[1]?.trim()}
+                            </div>
+                            <div className="mt-1 text-xs text-gray-500">
+                              {week.filledDays} full days · {week.partialDays} partial · {week.emptyDays} empty
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
+                            <span className="rounded-full bg-blue-50 px-3 py-1 text-blue-700">
+                              Logged {formatMinutesAsClock(week.loggedMinutes)}
+                            </span>
+                            <span className="rounded-full bg-gray-100 px-3 py-1 text-gray-700">
+                              Target {formatMinutesAsClock(week.targetMinutes)}
+                            </span>
+                            <span className="rounded-full bg-red-50 px-3 py-1 text-red-700">
+                              Missing {formatMinutesAsClock(week.missingMinutes)}
                             </span>
                           </div>
+                        </div>
 
-                          <div className="mt-3">
-                            <div className="text-xl font-bold text-gray-900">
-                              {formatMinutesAsClock(day.loggedMinutes)}
+                        <div className="px-5 pb-4">
+                          <div className="flex items-center gap-4 text-xs text-gray-500">
+                            <div className="w-16">Progress</div>
+                            <div className="relative flex-1 h-1.5 rounded-full bg-gray-200 overflow-hidden">
+                              <div
+                                className={`absolute top-0 left-0 h-full ${progressPercentage >= 100 ? "bg-green-500" : progressPercentage > 0 ? "bg-orange-500" : "bg-red-500"}`}
+                                style={{ width: `${progressPercentage}%` }}
+                              />
                             </div>
-                            <div className="text-[10px] text-gray-500">
-                              Target {formatMinutesAsClock(day.targetMinutes)}
-                            </div>
+                            <div className="w-8 text-right font-medium">{progressPercentage}%</div>
                           </div>
+                        </div>
 
-                          <div className="mt-2 text-[11px] leading-tight text-gray-600">
-                            {day.status === "partial" || day.status === "empty" ? (
-                              <span className="text-red-700 font-medium">
-                                Need {formatMinutesAsClock(day.missingMinutes)} more
-                              </span>
-                            ) : day.status === "over" ? (
-                              <span className="text-blue-700 font-medium">
-                                Over by{" "}
-                                {formatMinutesAsClock(
-                                  day.loggedMinutes - day.targetMinutes
-                                )}
-                              </span>
-                            ) : day.status === "weekend" ? (
-                              <span>Weekend</span>
-                            ) : day.status === "upcoming" ? (
-                              <span>Upcoming</span>
-                            ) : (
-                              <span className="text-green-700 font-medium">Target covered</span>
-                            )}
-                          </div>
+                        <div className="border-t border-gray-200">
+                          <div className="flex overflow-x-auto sheet-panel-scrollbar">
+                            {week.days.map((day, index) => (
+                              <div
+                                key={day.date}
+                                className={`flex-none w-48 p-4 shrink-0 transition-colors ${index !== week.days.length - 1 ? "border-r border-gray-200" : ""} ${day.status === "weekend" ? "bg-gray-50/50" : "bg-white"}`}
+                              >
+                                <div className="flex items-center justify-between gap-1 mb-2">
+                                  <div className="text-[10px] font-semibold text-gray-500 uppercase">
+                                    {day.dayLabel}
+                                  </div>
+                                  <div className="text-[10px] text-gray-500">
+                                    {formatDate(day.date).slice(0, 6)}
+                                  </div>
+                                </div>
 
-                          {day.projects.length ? (
-                            <div className="mt-3 space-y-1">
-                              {day.projects.slice(0, 3).map((project) => (
-                                <div
-                                  key={`${day.date}-${project.projectId}`}
-                                  className="flex items-center justify-between gap-2 rounded bg-white/60 px-2 py-1 text-[10px] text-gray-700"
-                                >
-                                  <span className="truncate">
-                                    {project.projectName}
-                                  </span>
-                                  <span className="shrink-0 font-medium text-gray-900">
-                                    {formatMinutesAsClock(project.durationMinutes)}
+                                <div className="mb-2">
+                                  <span
+                                    className={`inline-block rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
+                                      day.status === "partial" || day.status === "empty"
+                                        ? "bg-blue-50 text-blue-700"
+                                        : day.status === "weekend" || day.status === "upcoming"
+                                        ? "bg-gray-100 text-gray-500"
+                                        : day.status === "over"
+                                        ? "bg-purple-50 text-purple-700"
+                                        : "bg-green-50 text-green-700"
+                                    }`}
+                                  >
+                                    {getStatusLabel(day)}
                                   </span>
                                 </div>
-                              ))}
-                            </div>
-                          ) : null}
+
+                                <div className="mt-1 mb-4">
+                                  <div className="text-2xl font-bold text-gray-900">
+                                    {formatMinutesAsClock(day.loggedMinutes)}
+                                  </div>
+                                  <div className="text-[10px] text-gray-500 mt-0.5">
+                                    Target {formatMinutesAsClock(day.targetMinutes)}
+                                  </div>
+                                  <div className="mt-0.5 h-4">
+                                    {day.status === "partial" || day.status === "empty" ? (
+                                      <div className="text-[10px] font-bold text-red-700">
+                                        Need {formatMinutesAsClock(day.missingMinutes)} more
+                                      </div>
+                                    ) : day.status === "over" ? (
+                                      <div className="text-[10px] font-bold text-purple-700">
+                                        Over by {formatMinutesAsClock(day.loggedMinutes - day.targetMinutes)}
+                                      </div>
+                                    ) : day.status === "upcoming" ? (
+                                      null
+                                    ) : day.status === "filled" ? (
+                                      <div className="text-[10px] font-bold text-green-700">Target met</div>
+                                    ) : null}
+                                  </div>
+                                </div>
+
+                                {day.projects.length ? (
+                                  <div className="mt-3 space-y-1">
+                                    {day.projects.slice(0, 3).map((project) => (
+                                      <div
+                                        key={`${day.date}-${project.projectId}`}
+                                        className="flex items-center justify-between gap-1 rounded bg-gray-100 px-1.5 py-1 text-[9px] text-gray-600"
+                                      >
+                                        <span className="truncate">
+                                          {project.projectName}
+                                        </span>
+                                        <span className="shrink-0 font-medium">
+                                          - {formatMinutesAsClock(project.durationMinutes)}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : null}
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      ))}
-                    </div>
-                  </article>
-                ))}
+                      </article>
+                    )
+                  })}
+                </div>
               </div>
 
-              <aside className="space-y-4">
-                <section className="rounded border border-gray-300 bg-white p-4 shadow-sm">
-                  <div className="flex items-center gap-2 text-sm font-semibold text-gray-900">
-                    <CheckCircle2 className="h-4 w-4 text-green-600" />
-                    Action Required
+              <aside className="space-y-4 pt-8 overflow-y-auto pr-2 sheet-panel-scrollbar pb-8">
+                <article className="rounded border border-gray-300 bg-white shadow-sm overflow-hidden">
+                  <div className="flex items-center gap-3 p-4">
+                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-red-50 text-red-600">
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/></svg>
+                    </span>
+                    <h3 className="font-bold text-gray-800 text-sm">Action required</h3>
                   </div>
-                  <p className="mt-1 text-xs text-gray-500">
-                    Days that are below the 8-hour policy.
-                  </p>
-
-                  <div className="mt-3 space-y-2">
+                  <div className="border-t border-gray-200 px-4 py-3">
+                    <p className="text-xs text-gray-500">Days that are twice below the 8-hour policy.</p>
+                  </div>
+                  
+                  <div className="divide-y divide-gray-200">
                     {totalAttentionDays ? (
                       analytics.attentionDays.slice(0, 12).map((day) => (
                         <div
                           key={`attention-${day.date}`}
-                          className="rounded border border-red-200 bg-red-50 px-3 py-2"
+                          className="flex items-center justify-between gap-3 px-4 py-3"
                         >
-                          <div className="flex items-center justify-between gap-2">
-                            <div>
-                              <div className="text-xs font-semibold text-gray-900">
-                                {formatDate(day.date)}
-                              </div>
-                              <div className="text-[10px] text-gray-600">
-                                Logged {formatMinutesAsClock(day.loggedMinutes)} of{" "}
-                                {formatMinutesAsClock(day.targetMinutes)}
-                              </div>
+                          <div>
+                            <div className="text-[13px] font-bold text-gray-900">
+                              {formatDate(day.date)}
                             </div>
-                            <div className="text-xs font-bold text-red-700">
-                              Need {formatMinutesAsClock(day.missingMinutes)}
+                            <div className="mt-0.5 text-xs text-gray-500">
+                              Logged {formatMinutesAsClock(day.loggedMinutes)} of{" "}
+                              {formatMinutesAsClock(day.targetMinutes)}
                             </div>
+                          </div>
+                          <div className="rounded bg-red-100 px-2 py-1 text-xs font-bold text-red-700">
+                            Need {formatMinutesAsClock(day.missingMinutes)}
                           </div>
                         </div>
                       ))
                     ) : (
-                      <div className="rounded border border-green-200 bg-green-50 px-3 py-2 text-xs text-green-800">
+                      <div className="px-4 py-4 text-xs text-green-700 font-medium bg-green-50 border-t border-gray-200">
                         All tracked weekdays meet the target!
                       </div>
                     )}
                   </div>
-                </section>
+                </article>
 
-                <section className="rounded border border-gray-300 bg-white p-4 shadow-sm">
-                  <div className="flex items-center gap-2 text-sm font-semibold text-gray-900">
-                    <Clock3 className="h-4 w-4 text-blue-600" />
-                    Coverage Snapshot
+                <article className="rounded border border-gray-300 bg-white shadow-sm overflow-hidden">
+                  <div className="flex items-center gap-3 p-4">
+                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+                    </span>
+                    <h3 className="font-bold text-gray-800 text-sm">Coverage snapshot</h3>
                   </div>
-                  <div className="mt-3 space-y-2 text-xs text-gray-700">
-                    <MetricLine
-                      label="Total logged in range"
-                      value={formatMinutesAsClock(analytics.totalLoggedMinutes)}
-                    />
-                    <MetricLine
-                      label="Expected per workday"
-                      value={formatMinutesAsClock(
-                        analytics.expectedMinutesPerWorkday
+                  
+                  <div className="border-t border-gray-200 px-4 py-4 space-y-1">
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Total logged in range</div>
+                    <div className="text-xl font-bold text-gray-900">
+                      {formatMinutesAsClock(
+                        analytics.weeks.reduce((acc, week) => acc + week.loggedMinutes, 0)
                       )}
-                    />
-                    <MetricLine
-                      label="Generated"
-                      value={new Date(analytics.generatedAt).toLocaleString(
-                        "en-GB",
-                        {
-                          dateStyle: "medium",
-                          timeStyle: "short",
-                        }
-                      )}
-                    />
+                    </div>
                   </div>
-                </section>
+                  
+                  <div className="border-t border-gray-200 px-4 py-4 space-y-1">
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Expected per workday</div>
+                    <div className="text-xl font-bold text-gray-900">08:00</div>
+                  </div>
+                  
+                  <div className="border-t border-gray-200 px-4 py-2 text-center">
+                    <span className="text-[10px] text-gray-400">
+                      Generated · {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}, {new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                </article>
               </aside>
             </section>
           </>
@@ -490,17 +512,19 @@ function SummaryCard({
   helper: string
 }) {
   return (
-    <div className="rounded border border-gray-300 bg-white p-4 shadow-sm">
-      <div className="flex items-center gap-2 text-xs font-semibold text-gray-500 uppercase">
-        <span className="inline-flex h-6 w-6 items-center justify-center rounded bg-gray-100 text-gray-700">
+    <div className="rounded border border-gray-300 bg-white p-4 shadow-sm flex flex-col justify-between min-h-[110px]">
+      <div className="flex items-center gap-2 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
+        <span className="text-gray-500">
           {icon}
         </span>
         {label}
       </div>
-      <div className="mt-3 text-2xl font-bold text-gray-900">
-        {value}
+      <div className="mt-auto">
+        <div className="text-2xl font-bold text-gray-900 leading-none mb-1.5">
+          {value}
+        </div>
+        <div className="text-[11px] text-gray-500">{helper}</div>
       </div>
-      <div className="mt-1 text-xs text-gray-500">{helper}</div>
     </div>
   )
 }

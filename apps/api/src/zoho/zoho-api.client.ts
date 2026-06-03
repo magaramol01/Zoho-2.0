@@ -115,7 +115,11 @@ export class ZohoApiClient {
       }
 
       if (!response.ok) {
-        console.error(`[ZohoApiClient] Error response from ${url}. Status: ${response.status}. Body: ${rawText.substring(0, 500)}`);
+        if (response.status >= 500) {
+          console.error(`[ZohoApiClient] Error response from ${url}. Status: ${response.status}. Body: ${rawText.substring(0, 500)}`);
+        } else {
+          console.warn(`[ZohoApiClient] Expected upstream error from ${url}. Status: ${response.status}. Body: ${rawText.substring(0, 500)}`);
+        }
         throw mapUpstreamError(response.status, parsedBody);
       }
 

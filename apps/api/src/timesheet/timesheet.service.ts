@@ -458,43 +458,27 @@ export class TimesheetService {
       : await this.db.db.select().from(projectCacheTable);
 
     for (const project of projects) {
-      const payload = await this.zohoApiClient.request<unknown>({
-        path: `/zsapi/team/${project.workspaceId}/projects/${project.id}/timesheet/`,
-        query: {
-          action: "data",
-          index: 1,
-          range: 100,
-        },
-      });
+      try {
+        const payload = await this.zohoApiClient.request<unknown>({
+          path: `/zsapi/team/${project.workspaceId}/projects/${project.id}/timesheet/`,
+          query: {
+            action: "data",
+            index: 1,
+            range: 100,
+          },
+        });
 
-      const logs = this.zohoNormalizer.normalizeTimesheetLogs(payload);
-      const syncedAt = new Date().toISOString();
-      for (const log of logs) {
-        const userName =
-          log.userName ||
-          (log.userId ? userNameLookup.get(log.userId) ?? null : null);
+        const logs = this.zohoNormalizer.normalizeTimesheetLogs(payload);
+        const syncedAt = new Date().toISOString();
+        for (const log of logs) {
+          const userName =
+            log.userName ||
+            (log.userId ? userNameLookup.get(log.userId) ?? null : null);
 
-        await this.db.db
-          .insert(timesheetLogCacheTable)
-          .values({
-            id: log.id,
-            taskId: log.taskId,
-            projectId: log.projectId || project.id,
-            projectName: log.projectName || project.name,
-            sprintId: log.sprintId,
-            taskName: log.taskName,
-            date: log.date,
-            durationMinutes: log.durationMinutes,
-            notes: log.notes,
-            userId: log.userId,
-            userName,
-            billable: log.billable,
-            rawJson: JSON.stringify(log),
-            syncedAt,
-          })
-          .onConflictDoUpdate({
-            target: timesheetLogCacheTable.id,
-            set: {
+          await this.db.db
+            .insert(timesheetLogCacheTable)
+            .values({
+              id: log.id,
               taskId: log.taskId,
               projectId: log.projectId || project.id,
               projectName: log.projectName || project.name,
@@ -508,9 +492,29 @@ export class TimesheetService {
               billable: log.billable,
               rawJson: JSON.stringify(log),
               syncedAt,
-              updatedAt: syncedAt,
-            },
-          });
+            })
+            .onConflictDoUpdate({
+              target: timesheetLogCacheTable.id,
+              set: {
+                taskId: log.taskId,
+                projectId: log.projectId || project.id,
+                projectName: log.projectName || project.name,
+                sprintId: log.sprintId,
+                taskName: log.taskName,
+                date: log.date,
+                durationMinutes: log.durationMinutes,
+                notes: log.notes,
+                userId: log.userId,
+                userName,
+                billable: log.billable,
+                rawJson: JSON.stringify(log),
+                syncedAt,
+                updatedAt: syncedAt,
+              },
+            });
+        }
+      } catch (error) {
+        console.warn(`[TimesheetService] Failed to sync timesheets for project ${project.id}:`, error instanceof Error ? error.message : String(error));
       }
     }
   }

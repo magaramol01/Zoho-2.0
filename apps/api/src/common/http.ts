@@ -15,8 +15,13 @@ export const mapUpstreamError = (status: number, body: unknown) => {
     });
   }
 
+  const zohoMessage =
+    typeof body === "object" && body !== null && "message" in body && typeof (body as any).message === "string"
+      ? (body as any).message
+      : "Unexpected Zoho response";
+
   return new BadGatewayException({
-    message: "Unexpected Zoho response",
+    message: zohoMessage,
     details: body,
   });
 };

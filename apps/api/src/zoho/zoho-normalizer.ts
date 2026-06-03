@@ -433,6 +433,7 @@ export class ZohoNormalizer {
     const container = asRecord(payload);
     const matrix = normalizedRows(payload, "logIds", "logJObj", "log_prop");
     if (matrix.length) {
+      const userDisplayName = asRecord(container.userDisplayName || {});
       return matrix
         .map(({ id, values, props }) => {
           const userId = asNullableString(
@@ -442,13 +443,14 @@ export class ZohoNormalizer {
               "user_id",
               "ownerId",
               "ownerid",
+              "Owner",
               "logOwnerId",
               "logownerid",
               "logUserId",
               "loguserid",
             ]),
           );
-          const userName = asNullableString(
+          const rawUserName = asNullableString(
             matrixValueFromProps(values, props, [
               "userName",
               "username",
@@ -459,11 +461,12 @@ export class ZohoNormalizer {
               "logownername",
             ]),
           );
+          const userName = rawUserName || (userId ? asNullableString(userDisplayName[userId]) : null);
 
           return {
             id,
             taskId: asNullableString(values[Number(props.itemId ?? 8)]),
-            projectId: asString(values[Number(props.projectId ?? 32)]),
+            projectId: asString(values[Number(props.projectId)]),
             projectName: "",
             sprintId: asNullableString(values[Number(props.sprintId ?? 0)]),
             taskName: asNullableString(values[Number(props.itemName ?? 2)]),

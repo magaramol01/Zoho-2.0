@@ -10,6 +10,18 @@ import {
   syncStateTable,
   usersTable,
   zohoConnectionsTable,
+  workspaceCacheTable,
+  projectCacheTable,
+  sprintCacheTable,
+  statusCacheTable,
+  priorityCacheTable,
+  userCacheTable,
+  tagCacheTable,
+  taskCacheTable,
+  timesheetLogCacheTable,
+  savedViewsTable,
+  userPreferencesTable,
+  mutationAuditTable,
 } from "../db/schema";
 
 type CallbackPayload = {
@@ -148,14 +160,23 @@ export class AuthService {
 
   async disconnect(req: Request, res: Response) {
     await this.logout(req, res);
+    
+    // Clear all connection and cache data to ensure a completely fresh start on next login
     await this.db.db.delete(zohoConnectionsTable);
-    await this.db.db.delete(syncStateTable).where(
-      inArray(syncStateTable.key, [
-        "current_zoho_user_id",
-        "current_zoho_user_name",
-        "current_zoho_internal_user_id",
-        "current_zoho_internal_user_name",
-      ]),
-    );
+    await this.db.db.delete(workspaceCacheTable);
+    await this.db.db.delete(projectCacheTable);
+    await this.db.db.delete(sprintCacheTable);
+    await this.db.db.delete(statusCacheTable);
+    await this.db.db.delete(priorityCacheTable);
+    await this.db.db.delete(userCacheTable);
+    await this.db.db.delete(tagCacheTable);
+    await this.db.db.delete(taskCacheTable);
+    await this.db.db.delete(timesheetLogCacheTable);
+    await this.db.db.delete(savedViewsTable);
+    await this.db.db.delete(userPreferencesTable);
+    await this.db.db.delete(mutationAuditTable);
+    
+    // We clear all sync state, not just specific keys, to ensure full wipe
+    await this.db.db.delete(syncStateTable);
   }
 }

@@ -226,7 +226,35 @@ button {
   text-align: right;
 }
 
-/* ─── Scrollbars ─────────────────────────────────────────────────────────── */
+/* ─── Global Scrollbars ────────────────────────────────────────────────────── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: var(--text-muted);
+  border: 1px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+  border: 1px solid transparent;
+  background-clip: padding-box;
+}
+
+/* ─── Specific Grid Scrollbars ───────────────────────────────────────────── */
 .sheet-view-scrollbar,
 .sheet-tabs-scroll,
 .sheet-panel-scrollbar,
@@ -234,8 +262,6 @@ button {
 .sheet-grid .ag-body-horizontal-scroll-viewport,
 .sheet-grid .ag-virtual-list-viewport {
   overscroll-behavior-x: contain;
-  scrollbar-width: thin;
-  scrollbar-color: #cbd5e1 #f8fafc;
 }
 
 .sheet-tabs-viewport {

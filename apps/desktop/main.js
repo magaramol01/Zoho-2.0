@@ -90,7 +90,7 @@ function createWindow() {
 
 app.whenReady().then(async () => {
   if (isDev) {
-    // Development: assume 'pnpm dev' already started Next.js on port 3000
+    // Development: assume 'pnpm dev' already started Next.js on port 6001
     waitForServer(`http://localhost:${WEB_PORT}`, 60000)
       .then(() => createWindow())
       .catch(() => createWindow()); // open anyway after timeout

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 
 const backendApiBaseUrl =
-  process.env.ZOHO_POWER_GRID_API_URL ?? "http://127.0.0.1:3001/api"
+  process.env.ZOHO_POWER_GRID_API_URL ?? "http://127.0.0.1:6002/api"
 
 type ErrorPayload = {
   message?: string

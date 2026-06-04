@@ -33,8 +33,8 @@ const PINNED_TABS_STORAGE_KEY = "zoho-power-grid:pinned-project-tabs"
 const LOG_USER_STORAGE_KEY = "zoho-power-grid:preferred-log-user-id"
 const API_BASE =
   typeof window !== "undefined"
-    ? (process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3001")
-    : "http://localhost:3001"
+    ? (process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:6002")
+    : "http://localhost:6002"
 const LOCALHOST_LOGIN_URL = `${API_BASE}/api/auth/login`
 const LOCALHOST_DISCONNECT_URL = `${API_BASE}/api/auth/disconnect`
 

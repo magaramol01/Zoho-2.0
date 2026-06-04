@@ -3,14 +3,14 @@ import { ConfigService } from "@nestjs/config";
 import { z } from "zod";
 
 export const envSchema = z.object({
-  PORT: z.coerce.number().default(3001),
-  APP_URL: z.string().url().default("http://localhost:3000"),
+  PORT: z.coerce.number().default(6002),
+  APP_URL: z.string().url().default("http://localhost:6001"),
   SESSION_COOKIE_NAME: z.string().default("zoho_power_grid_session"),
   APP_ENCRYPTION_KEY: z.string().min(32),
   SQLITE_DB_PATH: z.string().default("./data/zoho-power-grid.db"),
   ZOHO_CLIENT_ID: z.string().default(""),
   ZOHO_CLIENT_SECRET: z.string().default(""),
-  ZOHO_REDIRECT_URI: z.string().url().default("http://localhost:3001/api/auth/callback"),
+  ZOHO_REDIRECT_URI: z.string().url().default("http://localhost:6002/api/auth/callback"),
   ZOHO_SCOPES: z.string().default("ZohoSprints.projects.ALL,ZohoSprints.sprints.ALL,ZohoSprints.items.ALL,ZohoSprints.timesheet.ALL"),
   ZOHO_ACCOUNTS_BASE_URL: z.string().url().default("https://accounts.zoho.com"),
   ZOHO_API_BASE_URL: z.string().url().default("https://sprintsapi.zoho.com"),

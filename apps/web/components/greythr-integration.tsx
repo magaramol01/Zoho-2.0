@@ -1,38 +1,52 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Settings, LogIn } from "lucide-react"
+import { Settings, LogIn, CheckCircle } from "lucide-react"
+import { toast } from "sonner"
 
-export default function GreythrIntegration({ 
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3001"
+
+export default function GreythrIntegration({
   realtime,
-}: { 
-  realtime: { totalHours: string, currentStatus: string } | null
+}: {
+  realtime: { totalHours: string; currentStatus: string } | null
 }) {
   const [isOpen, setIsOpen] = useState(false)
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
+  const [hasCredentials, setHasCredentials] = useState(false)
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    fetch("http://localhost:3001/api/greythr/credentials")
-      .then(res => res.json())
-      .then(data => {
+    fetch(`${API_BASE}/api/greythr/credentials`)
+      .then((res) => res.json())
+      .then((data: { hasCredentials?: boolean; username?: string }) => {
+        // API now only returns { hasCredentials, username } — never the password
         if (data.username) setUsername(data.username)
-        if (data.password) setPassword(data.password)
+        if (data.hasCredentials) setHasCredentials(true)
       })
-      .catch(err => console.error("Could not fetch greythr creds", err))
+      .catch((err) => console.error("Could not fetch greythr creds", err))
   }, [])
 
   const handleSaveCreds = async () => {
+    if (!username.trim() || !password.trim()) {
+      toast.error("Enter both username and password")
+      return
+    }
     setSaving(true)
     try {
-      await fetch("http://localhost:3001/api/greythr/credentials", {
+      const res = await fetch(`${API_BASE}/api/greythr/credentials`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify({ username: username.trim(), password }),
       })
+      if (!res.ok) throw new Error("Failed to save credentials")
+      setHasCredentials(true)
+      setPassword("") // clear password from UI memory after save
       setIsOpen(false)
+      toast.success("GreytHR credentials saved")
     } catch (err) {
+      toast.error("Could not save credentials")
       console.error(err)
     } finally {
       setSaving(false)
@@ -42,53 +56,71 @@ export default function GreythrIntegration({
   return (
     <div className="relative flex items-center gap-3">
       {realtime && (
-        <div className="flex flex-col items-end mr-2">
-           <div className="text-[10px] font-bold text-gray-500 uppercase leading-tight">GreytHR Today</div>
-           <div className="flex items-center gap-1.5">
-             <div className={`h-1.5 w-1.5 rounded-full ${realtime.currentStatus === 'IN' ? 'bg-green-500' : 'bg-red-500'}`}></div>
-             <div className="text-sm font-bold text-gray-900 leading-none">{realtime.totalHours}</div>
-           </div>
+        <div className="flex flex-col items-end mr-1">
+          <div className="text-[9px] font-bold text-gray-400 uppercase leading-tight tracking-wider">
+            GreytHR Today
+          </div>
+          <div className="flex items-center gap-1.5 mt-0.5">
+            <div
+              className={`h-2 w-2 rounded-full ${realtime.currentStatus === "IN" ? "bg-emerald-500 shadow-sm shadow-emerald-300" : "bg-red-400"}`}
+            />
+            <div className="text-sm font-bold text-gray-800 leading-none tabular-nums">
+              {realtime.totalHours}
+            </div>
+          </div>
         </div>
       )}
 
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex h-8 w-8 items-center justify-center rounded hover:bg-gray-100 text-gray-600 transition"
+        className="relative flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
         title="GreytHR Settings"
+        type="button"
       >
         <Settings className="h-4 w-4" />
+        {hasCredentials && (
+          <span className="absolute -top-0.5 -right-0.5 flex h-3 w-3 items-center justify-center rounded-full bg-emerald-500">
+            <CheckCircle className="h-2 w-2 text-white" />
+          </span>
+        )}
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-10 w-72 p-4 bg-white border border-gray-200 rounded-lg shadow-xl z-50">
-          <h3 className="text-sm font-semibold mb-3 flex items-center gap-2 text-gray-800">
-            <LogIn className="h-4 w-4" /> GreytHR Credentials
-          </h3>
-          <div className="flex flex-col gap-3">
+        <div className="absolute right-0 top-10 w-72 rounded-xl bg-white border border-gray-200 shadow-xl z-50 overflow-hidden animate-slide-up">
+          <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100 bg-gray-50">
+            <LogIn className="h-4 w-4 text-gray-500" />
+            <h3 className="text-sm font-semibold text-gray-800">GreytHR Credentials</h3>
+          </div>
+          <div className="flex flex-col gap-3 p-4">
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Username</label>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Username / Email</label>
               <input
                 type="text"
                 value={username}
-                onChange={e => setUsername(e.target.value)}
-                className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm"
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="your.email@company.com"
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Password</label>
+              <label className="block text-xs font-medium text-gray-600 mb-1">
+                Password {hasCredentials && <span className="text-emerald-600 font-normal">(already saved)</span>}
+              </label>
               <input
                 type="password"
                 value={password}
-                onChange={e => setPassword(e.target.value)}
-                className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm"
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder={hasCredentials ? "Enter to change…" : "Your GreytHR password"}
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
               />
             </div>
             <button
               onClick={handleSaveCreds}
               disabled={saving}
-              className="mt-1 w-full rounded bg-gray-800 px-4 py-2 text-sm font-medium text-white hover:bg-gray-900 disabled:opacity-50"
+              type="button"
+              className="w-full rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50 transition-colors"
             >
-              {saving ? "Saving..." : "Save Credentials"}
+              {saving ? "Saving…" : "Save Credentials"}
             </button>
           </div>
         </div>

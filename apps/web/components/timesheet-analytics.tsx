@@ -69,8 +69,9 @@ export type TimesheetAnalyticsSummary = {
   expectedMinutesPerWorkday: number
   selectedWeekCount: number
   matchedLogCount: number
+  includedLogsCount?: number
   logsWithoutOwnerCount: number
-  includedUnknownOwnerLogs: boolean
+  includedUnknownOwnerLogs: number
   totalLoggedMinutes: number
   attentionDays: TimesheetAnalyticsDay[]
   weeks: TimesheetAnalyticsWeek[]
@@ -475,6 +476,43 @@ export default function TimesheetAnalytics({
                 </article>
               </aside>
             </section>
+
+            {/* Per-project breakdown chart */}
+            {(() => {
+              const projectBuckets = new Map<string, { name: string; minutes: number }>()
+              for (const week of analytics.weeks) {
+                for (const day of week.days) {
+                  for (const proj of day.projects) {
+                    const existing = projectBuckets.get(proj.projectId) ?? { name: proj.projectName, minutes: 0 }
+                    existing.minutes += proj.durationMinutes
+                    projectBuckets.set(proj.projectId, existing)
+                  }
+                }
+              }
+              const sorted = [...projectBuckets.values()].sort((a, b) => b.minutes - a.minutes)
+              const maxMinutes = sorted[0]?.minutes ?? 1
+              const CHART_COLORS = ["#0ea5e9","#8b5cf6","#f97316","#10b981","#f43f5e","#eab308","#06b6d4","#a855f7"]
+              if (sorted.length === 0) return null
+              return (
+                <section className="shrink-0">
+                  <div className="mb-3 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Time by project (all weeks)</div>
+                  <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm space-y-2.5">
+                    {sorted.slice(0, 8).map((proj, i) => (
+                      <div key={proj.name} className="flex items-center gap-3">
+                        <div className="w-28 truncate text-xs text-gray-600 shrink-0" title={proj.name}>{proj.name}</div>
+                        <div className="flex-1 relative h-5 rounded-full bg-gray-100 overflow-hidden">
+                          <div
+                            className="absolute inset-y-0 left-0 rounded-full"
+                            style={{ width: `${Math.max(2, (proj.minutes / maxMinutes) * 100)}%`, background: CHART_COLORS[i % CHART_COLORS.length] }}
+                          />
+                        </div>
+                        <div className="w-16 text-right text-xs font-semibold text-gray-700 shrink-0">{formatMinutesAsClock(proj.minutes)}</div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )
+            })()}
           </>
         ) : null}
 
@@ -490,25 +528,25 @@ export default function TimesheetAnalytics({
 
 function SummaryCard({
   icon,
-  label,
+  title,
   value,
   helper,
+  isError = false,
 }: {
   icon: ReactNode
-  label: string
+  title: string
   value: string
   helper: string
+  isError?: boolean
 }) {
   return (
-    <div className="rounded border border-gray-300 bg-white p-4 shadow-sm flex flex-col justify-between min-h-[110px]">
-      <div className="flex items-center gap-2 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
-        <span className="text-gray-500">
-          {icon}
-        </span>
-        {label}
+    <div className={`rounded-xl border bg-white p-4 shadow-sm flex flex-col justify-between min-h-[110px] ${isError ? "border-red-200 bg-red-50" : "border-gray-200"}`}>
+      <div className={`flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider ${isError ? "text-red-500" : "text-gray-400"}`}>
+        <span>{icon}</span>
+        {title}
       </div>
       <div className="mt-auto">
-        <div className="text-2xl font-bold text-gray-900 leading-none mb-1.5">
+        <div className={`text-2xl font-bold leading-none mb-1.5 ${isError ? "text-red-700" : "text-gray-900"}`}>
           {value}
         </div>
         <div className="text-[11px] text-gray-500">{helper}</div>
@@ -516,6 +554,7 @@ function SummaryCard({
     </div>
   )
 }
+
 
 function MetricLine({
   label,

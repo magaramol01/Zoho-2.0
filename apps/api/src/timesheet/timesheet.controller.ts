@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query, UseGuards } from "@nestjs/common";
 import { SessionAuthGuard } from "../auth/session-auth.guard";
 import {
   BulkTimesheetDto,
@@ -31,5 +31,11 @@ export class TimesheetController {
   @Patch(":logId")
   updateLog(@Param("logId") logId: string, @Body() body: UpdateTimesheetLogDto) {
     return this.timesheetService.updateLog(logId, body);
+  }
+
+  @Delete(":logId")
+  @HttpCode(200)
+  deleteLog(@Param("logId") logId: string) {
+    return this.timesheetService.deleteLog(logId);
   }
 }

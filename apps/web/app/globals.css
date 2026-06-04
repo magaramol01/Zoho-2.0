@@ -1,11 +1,79 @@
 @import "tailwindcss";
 
+
+/* ─── Theme Tokens ──────────────────────────────────────────────────────── */
 :root {
   color-scheme: light;
-  --font-sans: "Segoe UI", Arial, Helvetica, sans-serif;
+  --font-sans: "Plus Jakarta Sans", "Segoe UI", Arial, Helvetica, sans-serif;
   --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+
+  --bg-primary: #ffffff;
+  --bg-secondary: #f9fafb;
+  --bg-tertiary: #f3f4f6;
+  --text-primary: #111827;
+  --text-secondary: #6b7280;
+  --text-muted: #9ca3af;
+  --border-color: #e5e7eb;
+  --border-strong: #d1d5db;
+  --card-bg: #ffffff;
+  --header-bg: #ffffff;
+  --tab-bg: #f9fafb;
+  --tab-active-bg: #ffffff;
+  --grid-bg: #ffffff;
+  --tag-blue-bg: #eff6ff;
+  --tag-blue-text: #2563eb;
 }
 
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-tertiary: #334155;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --border-color: #334155;
+  --border-strong: #475569;
+  --card-bg: #1e293b;
+  --header-bg: #0f172a;
+  --tab-bg: #1e293b;
+  --tab-active-bg: #0f172a;
+  --grid-bg: #1e293b;
+  --tag-blue-bg: #1e3a5f;
+  --tag-blue-text: #93c5fd;
+}
+
+/* ─── Smooth theme transition ────────────────────────────────────────────── */
+html {
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* ─── Keyframe animations ────────────────────────────────────────────────── */
+@keyframes slide-in-from-right {
+  from { transform: translateX(8px); opacity: 0; }
+  to   { transform: translateX(0);   opacity: 1; }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from { transform: translateY(6px); opacity: 0; }
+  to   { transform: translateY(0);   opacity: 1; }
+}
+
+.animate-slide-in { animation: slide-in-from-right 0.18s ease; }
+.animate-fade-in  { animation: fade-in 0.15s ease; }
+.animate-slide-up { animation: slide-up 0.18s ease; }
+
+/* ─── Due date badge colours ─────────────────────────────────────────────── */
+.due-overdue { color: #dc2626; font-weight: 600; }
+.due-soon    { color: #d97706; font-weight: 500; }
+.due-ok      { color: #16a34a; }
+
+/* ─── Base layout ────────────────────────────────────────────────────────── */
 html,
 body {
   height: 100%;
@@ -23,6 +91,7 @@ button {
   cursor: pointer;
 }
 
+/* ─── AG Grid theme ──────────────────────────────────────────────────────── */
 .sheet-grid {
   --ag-font-family: var(--font-sans);
   --ag-font-size: 13px;
@@ -157,6 +226,7 @@ button {
   text-align: right;
 }
 
+/* ─── Scrollbars ─────────────────────────────────────────────────────────── */
 .sheet-view-scrollbar,
 .sheet-tabs-scroll,
 .sheet-panel-scrollbar,

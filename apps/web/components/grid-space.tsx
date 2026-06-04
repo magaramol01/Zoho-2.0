@@ -11,10 +11,11 @@ import {
   type GridReadyEvent,
   type SideBarDef,
   type ValueFormatterParams,
-} from 'ag-grid-community';
+} from 'ag-grid-enterprise';
 import { AgGridReact } from 'ag-grid-react';
-import 'ag-grid-community/styles/ag-grid.css';
-import 'ag-grid-community/styles/ag-theme-alpine.css';
+import 'ag-grid-enterprise/styles/ag-grid.css';
+import 'ag-grid-enterprise/styles/ag-theme-alpine.css';
+
 
 export type GridRow = Record<string, string | number | null>;
 

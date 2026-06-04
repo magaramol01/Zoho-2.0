@@ -8,7 +8,10 @@ export class GreythrController {
   @Get('credentials')
   async getCredentials() {
     const creds = await this.greythrService.getCredentials();
-    return creds || { username: '', password: '' };
+    return {
+      hasCredentials: !!(creds?.username && creds?.password),
+      username: creds?.username ?? null,
+    };
   }
 
   @Post('credentials')

@@ -692,6 +692,50 @@ export class TimesheetService {
     return this.mapLogRow(row!, userNameLookup, projectNameLookup);
   }
 
+
+  async deleteLog(logId: string) {
+    const [existing] = await this.db.db
+      .select()
+      .from(timesheetLogCacheTable)
+      .where(eq(timesheetLogCacheTable.id, logId))
+      .limit(1);
+
+    if (!existing) {
+      throw new NotFoundException("Log not found");
+    }
+
+    const [project] = await this.db.db
+      .select()
+      .from(projectCacheTable)
+      .where(eq(projectCacheTable.id, existing.projectId))
+      .limit(1);
+
+    if ((await this.zohoApiClient.canUseZoho()) && project?.workspaceId) {
+      try {
+        await this.zohoApiClient.request({
+          path: `/zsapi/team/${project.workspaceId}/projects/${existing.projectId}/timesheet/${logId}/`,
+          method: "DELETE",
+          query: { action: "deletelog" },
+        });
+      } catch {
+        // If Zoho delete fails (e.g., log not in Zoho), still remove from local cache
+      }
+    }
+
+    await this.db.db
+      .delete(timesheetLogCacheTable)
+      .where(eq(timesheetLogCacheTable.id, logId));
+
+    if (existing.taskId) {
+      await this.recalculateTaskLoggedMinutes(existing.taskId);
+    }
+
+    const deletedAt = new Date().toISOString();
+    this.eventBus.emit({ type: "timesheet-updated", at: deletedAt });
+
+    return { ok: true, deletedAt };
+  }
+
   private async recalculateTaskLoggedMinutes(taskId: string) {
     const [task] = await this.db.db
       .select()

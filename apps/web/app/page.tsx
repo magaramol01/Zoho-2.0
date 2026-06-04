@@ -1237,16 +1237,11 @@ export default function Page() {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top,#dbeafe_0%,#eff6ff_32%,#f8fafc_72%)] px-6 text-slate-900">
-        <div className="w-full max-w-md rounded-[28px] border border-white/70 bg-white/80 p-8 text-center shadow-[0_30px_90px_rgba(15,23,42,0.12)] backdrop-blur">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
-            <FileSpreadsheet className="h-7 w-7" />
-          </div>
-          <h1 className="mt-5 text-2xl font-semibold tracking-tight">
-            Opening Zoho Power Grid
-          </h1>
-          <p className="mt-2 text-sm text-slate-600">
-            Checking your localhost Zoho session before loading the dashboard.
+      <main className="flex min-h-screen items-center justify-center bg-gray-50 px-6">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
+          <p className="text-base font-medium text-gray-600">
+            Syncing data from Zoho...
           </p>
         </div>
       </main>

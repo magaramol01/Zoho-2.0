@@ -92,6 +92,68 @@ export class GreythrService {
       .map((cookie: any) => `${cookie.name}=${cookie.value}`)
       .join('; ');
     
+    // 1) Fetch today's swipes data to determine the current user's employee ID and today's realtime status
+    let swipeData: any[] = [];
+    try {
+      const swipeResponse = await axios.get(
+        `https://smartshiphub.greythr.com/v3/api/attendance/swipes`,
+        {
+          headers: {
+            Cookie: cookieHeader,
+            'User-Agent': 'Mozilla/5.0',
+            accept: 'application/json',
+          },
+        }
+      );
+      if (swipeResponse.data && Array.isArray(swipeResponse.data)) {
+        swipeData = swipeResponse.data;
+      }
+    } catch (err: any) {
+      this.logger.warn(`Could not fetch today's swipe data: ${err.message}`);
+    }
+
+    // 2) Extract the employee ID from swipes. If empty (e.g., weekend/holiday), query last 10 days to resolve ID.
+    let employeeId: number | null = null;
+    if (swipeData.length > 0 && swipeData[0].employee?.id) {
+      employeeId = swipeData[0].employee.id;
+    } else {
+      try {
+        const today = new Date();
+        const tenDaysAgo = new Date();
+        tenDaysAgo.setDate(today.getDate() - 10);
+        const fromDateStr = tenDaysAgo.toISOString().split('T')[0];
+        const toDateStr = today.toISOString().split('T')[0];
+
+        const historicalSwipeResponse = await axios.get(
+          `https://smartshiphub.greythr.com/v3/api/attendance/swipes?fromDate=${fromDateStr}&toDate=${toDateStr}`,
+          {
+            headers: {
+              Cookie: cookieHeader,
+              'User-Agent': 'Mozilla/5.0',
+              accept: 'application/json',
+            },
+          }
+        );
+        if (
+          historicalSwipeResponse.data &&
+          Array.isArray(historicalSwipeResponse.data) &&
+          historicalSwipeResponse.data.length > 0 &&
+          historicalSwipeResponse.data[0].employee?.id
+        ) {
+          employeeId = historicalSwipeResponse.data[0].employee.id;
+        }
+      } catch (err: any) {
+        this.logger.warn(`Could not fetch historical swipe data to resolve employee ID: ${err.message}`);
+      }
+    }
+
+    if (!employeeId) {
+      this.logger.error('Could not determine employee ID from swipe records.');
+      throw new Error('Could not retrieve employee details from GreytHR.');
+    }
+
+    this.logger.log(`Resolved GreytHR employee ID: ${employeeId}`);
+
     const dates = Array.from({ length: 7 }, (_, i) => {
       const d = new Date();
       d.setDate(d.getDate() - i);
@@ -102,7 +164,7 @@ export class GreythrService {
       const results = await Promise.all(
         dates.map(date => 
           axios.get(
-            `https://smartshiphub.greythr.com/latte/v3/attendance/info/6/day?attendanceDate=${date}`,
+            `https://smartshiphub.greythr.com/latte/v3/attendance/info/${employeeId}/day?attendanceDate=${date}`,
             {
               headers: {
                 Cookie: cookieHeader,
@@ -127,56 +189,41 @@ export class GreythrService {
         }
       }
 
-      // 3) Fetch realtime swipe data for today's live time
+      // 3) Calculate realtime swipe data for today's live time from the pre-fetched swipeData
       let realtimeData = null;
-      try {
-        const swipeResponse = await axios.get(
-          `https://smartshiphub.greythr.com/v3/api/attendance/swipes`,
-          {
-            headers: {
-              Cookie: cookieHeader,
-              'User-Agent': 'Mozilla/5.0',
-            },
-          }
-        );
-        
-        if (swipeResponse.data && Array.isArray(swipeResponse.data)) {
-           // Apply the realtime calculation logic
-           const swipeData = swipeResponse.data;
-           swipeData.sort((a: any, b: any) => new Date(a.punchTime).getTime() - new Date(b.punchTime).getTime());
-           
-           let totalSeconds = 0;
-           let lastInTime: Date | null = null;
-           let currentStatus = 0;
+      if (swipeData.length > 0) {
+         // Apply the realtime calculation logic
+         swipeData.sort((a: any, b: any) => new Date(a.punchTime).getTime() - new Date(b.punchTime).getTime());
+         
+         let totalSeconds = 0;
+         let lastInTime: Date | null = null;
+         let currentStatus = 0;
 
-           swipeData.forEach((swipe: any) => {
-             const punchTime = new Date(swipe.punchTime);
-             if (swipe.inOutIndicator === 1) {
-               lastInTime = punchTime;
-               currentStatus = 1;
-             } else if (swipe.inOutIndicator === 0 && lastInTime) {
-               totalSeconds += (punchTime.getTime() - lastInTime.getTime()) / 1000;
-               lastInTime = null;
-               currentStatus = 0;
-             }
-           });
-
-           const now = new Date();
-           if (currentStatus === 1 && lastInTime) {
-             let lastPunchTime = new Date(swipeData[swipeData.length - 1].punchTime + 'Z');
-             totalSeconds += (now.getTime() - lastPunchTime.getTime()) / 1000;
+         swipeData.forEach((swipe: any) => {
+           const punchTime = new Date(swipe.punchTime);
+           if (swipe.inOutIndicator === 1) {
+             lastInTime = punchTime;
+             currentStatus = 1;
+           } else if (swipe.inOutIndicator === 0 && lastInTime) {
+             totalSeconds += (punchTime.getTime() - lastInTime.getTime()) / 1000;
+             lastInTime = null;
+             currentStatus = 0;
            }
+         });
 
-           const totalMinutes = Math.floor(totalSeconds / 60);
-           const totalHoursDisplay = `${String(Math.floor(totalMinutes / 60)).padStart(2, "0")}:${String(totalMinutes % 60).padStart(2, "0")}`;
-           
-           realtimeData = {
-              totalHours: totalHoursDisplay,
-              currentStatus: currentStatus ? "IN" : "OUT"
-           };
-        }
-      } catch (err: any) {
-        this.logger.warn(`Could not fetch swipe data: ${err.message}`);
+         const now = new Date();
+         if (currentStatus === 1 && lastInTime) {
+           let lastPunchTime = new Date(swipeData[swipeData.length - 1].punchTime + 'Z');
+           totalSeconds += (now.getTime() - lastPunchTime.getTime()) / 1000;
+         }
+
+         const totalMinutes = Math.floor(totalSeconds / 60);
+         const totalHoursDisplay = `${String(Math.floor(totalMinutes / 60)).padStart(2, "0")}:${String(totalMinutes % 60).padStart(2, "0")}`;
+         
+         realtimeData = {
+            totalHours: totalHoursDisplay,
+            currentStatus: currentStatus ? "IN" : "OUT"
+         };
       }
 
       return { dailyData: dailyDataMap, realtime: realtimeData };
@@ -186,3 +233,4 @@ export class GreythrService {
     }
   }
 }
+

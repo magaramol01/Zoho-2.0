@@ -17,6 +17,7 @@ import {
   Plus,
   RefreshCw,
   Share,
+  UserRound,
   X,
 } from "lucide-react"
 
@@ -1295,27 +1296,19 @@ export default function Page() {
                   : (activeProject?.name ?? "Project sheet")}
               </h1>
               <div className="mt-1 flex items-center gap-4 text-xs text-gray-500">
-                <span className="cursor-pointer rounded px-1 hover:bg-gray-100">
-                  File
-                </span>
-                <span className="cursor-pointer rounded px-1 hover:bg-gray-100">
-                  Edit
-                </span>
-                <span className="cursor-pointer rounded px-1 hover:bg-gray-100">
-                  View
-                </span>
-                <span className="cursor-pointer rounded px-1 hover:bg-gray-100">
-                  Insert
-                </span>
-                <span className="cursor-pointer rounded px-1 hover:bg-gray-100">
-                  Format
-                </span>
-                <span className="cursor-pointer rounded px-1 hover:bg-gray-100">
-                  Data
-                </span>
-                <span className="cursor-pointer rounded px-1 hover:bg-gray-100">
-                  Tools
-                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveView("sheet")
+                  }}
+                  className={`rounded px-2 py-0.5 transition ${
+                    activeView === "sheet"
+                      ? "bg-sky-100 font-semibold text-sky-700"
+                      : "cursor-pointer hover:bg-gray-100"
+                  }`}
+                >
+                  Sheet
+                </button>
                 <button
                   type="button"
                   onClick={() => {
@@ -1323,7 +1316,7 @@ export default function Page() {
                     setLogPanelError(null)
                     setActiveView("analytics")
                   }}
-                  className={`rounded px-1 transition ${
+                  className={`rounded px-2 py-0.5 transition ${
                     activeView === "analytics"
                       ? "bg-sky-100 font-semibold text-sky-700"
                       : "cursor-pointer hover:bg-gray-100"
@@ -1331,14 +1324,36 @@ export default function Page() {
                 >
                   Analytics
                 </button>
-                <span className="cursor-pointer rounded px-1 hover:bg-gray-100">
-                  Help
-                </span>
               </div>
             </div>
           </div>
 
           <div className="flex items-center gap-4">
+            {activeView === "analytics" && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-600">Track user</span>
+                <div className="relative">
+                  <UserRound className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" />
+                  <select
+                    value={analyticsUserId}
+                    onChange={(event) => setAnalyticsUserId(event.target.value)}
+                    className="h-8 w-40 lg:w-48 rounded border border-gray-300 bg-white pr-7 pl-8 text-xs text-gray-900 outline-none transition focus:border-blue-500 appearance-none"
+                  >
+                    <option value="">Use current Zoho user</option>
+                    {analyticsUserOptions.map((user) => (
+                      <option key={user.id} value={user.id}>
+                        {user.name}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                    <svg className="h-3.5 w-3.5 fill-current" viewBox="0 0 20 20">
+                      <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" fillRule="evenodd" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            )}
             <RefreshCw 
               onClick={handleSyncProject}
               className={`h-5 w-5 cursor-pointer text-gray-600 hover:text-blue-600 transition-transform ${syncingProject ? 'animate-spin text-blue-600' : ''}`} 

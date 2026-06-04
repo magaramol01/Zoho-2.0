@@ -159,54 +159,6 @@ export default function TimesheetAnalytics({
   return (
     <div className="flex h-full min-h-0 flex-col bg-gray-50 font-sans text-sm">
       <div className="mx-auto flex w-full flex-1 min-h-0 flex-col gap-6 px-4 py-6 md:px-8 lg:px-10">
-        <section className="shrink-0 rounded border border-gray-300 bg-white p-5 shadow-sm mb-2">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="space-y-2">
-              <button
-                type="button"
-                onClick={onBackToSheets}
-                className="inline-flex items-center gap-2 rounded border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50 hover:text-gray-900"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back to project sheet
-              </button>
-              <div className="mt-2">
-                <h2 className="text-xl font-semibold text-gray-900">
-                  Timesheet Analytics
-                </h2>
-                <p className="mt-1 max-w-3xl text-xs text-gray-500">
-                  Daily 8-hour view combining Zoho-synced log hours and locally added logs. Highlights missing or incomplete time entries.
-                </p>
-              </div>
-            </div>
-
-            <div className="w-full lg:w-64">
-              <label className="flex flex-col gap-1.5">
-                <span className="text-xs font-medium text-gray-600">Track user</span>
-                <div className="relative">
-                  <UserRound className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-500" />
-                  <select
-                    value={selectedUserId}
-                    onChange={(event) => onUserChange(event.target.value)}
-                    className="h-9 w-full rounded border border-gray-300 bg-white pr-8 pl-9 text-sm text-gray-900 outline-none transition focus:border-blue-500 appearance-none"
-                  >
-                    <option value="">Use current Zoho user</option>
-                    {availableUsers.map((user) => (
-                      <option key={user.id} value={user.id}>
-                        {user.name}
-                      </option>
-                    ))}
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
-                    <svg className="h-4 w-4 fill-current" viewBox="0 0 20 20">
-                      <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" fillRule="evenodd" />
-                    </svg>
-                  </div>
-                </div>
-              </label>
-            </div>
-          </div>
-        </section>
 
         {error ? (
           <div className="shrink-0 rounded border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800">

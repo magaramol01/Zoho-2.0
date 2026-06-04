@@ -42,6 +42,7 @@ const LOCALHOST_DISCONNECT_URL = `${API_BASE}/api/auth/disconnect`
 type Project = {
   id: string
   name: string
+  prefix?: string
 }
 
 type StatusOption = {
@@ -775,10 +776,12 @@ export default function Page() {
 
   // ─── Grid rows & columns ──────────────────────────────────────────────────
   const taskRows = useMemo<GridRow[]>(
-    () =>
-      activeProjectTasks.map((task) => ({
+    () => {
+      const prefix = activeProject?.prefix || ""
+      return activeProjectTasks.map((task) => ({
         id: task.id,
         itemNo: Number(task.itemNo),
+        itemId: prefix ? `${prefix}-I${task.itemNo}` : task.itemNo,
         name: task.name,
         statusId: task.statusId,
         statusName: task.statusName,
@@ -787,14 +790,14 @@ export default function Page() {
         sprintName: task.sprintName ?? "",
         dueDate: task.dueDate && task.dueDate !== "-1" ? formatIsoDate(task.dueDate) : null,
         loggedMinutes: task.loggedMinutes,
-      })),
-    [activeProjectTasks]
+      }))
+    },
+    [activeProjectTasks, activeProject]
   )
 
   const columnDefs = useMemo<ColDef<GridRow>[]>(
     () => [
-      { field: "itemNo", headerName: "Item", minWidth: 110, maxWidth: 140, filter: "agNumberColumnFilter" },
-      { field: "id", headerName: "Task ID", minWidth: 190, filter: "agTextColumnFilter" },
+      { field: "itemId", headerName: "Item ID", minWidth: 150, maxWidth: 200, filter: "agTextColumnFilter" },
       { field: "name", headerName: "Title", minWidth: 260, flex: 1.8, filter: "agTextColumnFilter" },
       {
         field: "statusName",
@@ -865,9 +868,9 @@ export default function Page() {
       toast.error("No data to export")
       return
     }
-    const headers = ["Item", "Task ID", "Title", "Status", "Priority", "Assignees", "Sprint", "Due Date", "Logged (min)"]
+    const headers = ["Item ID", "Task ID", "Title", "Status", "Priority", "Assignees", "Sprint", "Due Date", "Logged (min)"]
     const rows = taskRows.map((r) => [
-      r.itemNo, r.id, `"${String(r.name).replace(/"/g, '""')}"`,
+      r.itemId, r.id, `"${String(r.name).replace(/"/g, '""')}"`,
       r.statusName, r.priorityName, r.assigneeNames,
       r.sprintName, r.dueDate ?? "", r.loggedMinutes,
     ])

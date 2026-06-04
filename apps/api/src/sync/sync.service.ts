@@ -257,7 +257,7 @@ export class SyncService {
     projectName: string,
     syncedAt: string,
   ) {
-    const [sprintsPayload, backlogPayload, prioritiesPayload, statusesPayload] = await Promise.all([
+    const [sprintsPayload, backlogPayload, prioritiesPayload, statusesPayload, projectDetailsPayload] = await Promise.all([
       this.zohoApiClient.request<unknown>({
         path: `/zsapi/team/${workspaceId}/projects/${projectId}/sprints/`,
         query: { action: "data", index: 1, range: 250, type: "[1,2,3,4]" },
@@ -276,6 +276,12 @@ export class SyncService {
         path: `/zsapi/team/${workspaceId}/projects/${projectId}/itemstatus/`,
         query: { action: "data", index: 1, range: 100 },
       }),
+      this.zohoApiClient
+        .request<unknown>({
+          path: `/zsapi/team/${workspaceId}/projects/${projectId}/`,
+          query: { action: "details" },
+        })
+        .catch(() => null),
     ]);
 
     const sprintMap = new Map(
@@ -290,6 +296,31 @@ export class SyncService {
 
     const priorities = this.zohoNormalizer.normalizePriorities(prioritiesPayload);
     const statuses = this.zohoNormalizer.normalizeStatuses(statusesPayload);
+
+    const details = asRecord(projectDetailsPayload);
+    const prefix = asString(details.prefix);
+    if (prefix) {
+      const [existingProject] = await this.db.db
+        .select()
+        .from(projectCacheTable)
+        .where(eq(projectCacheTable.id, projectId))
+        .limit(1);
+
+      if (existingProject) {
+        let rawObj: Record<string, any> = {};
+        try {
+          rawObj = JSON.parse(existingProject.rawJson || "{}");
+        } catch {}
+        rawObj.prefix = prefix;
+        await this.db.db
+          .update(projectCacheTable)
+          .set({
+            rawJson: JSON.stringify(rawObj),
+            updatedAt: syncedAt,
+          })
+          .where(eq(projectCacheTable.id, projectId));
+      }
+    }
 
     for (const sprint of sprintMap.values()) {
       await this.db.db

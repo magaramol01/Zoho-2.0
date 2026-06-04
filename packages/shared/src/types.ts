@@ -171,7 +171,7 @@ export type DashboardSummary = {
 
 export type MetadataBundle = {
   workspaces: IdNamePair[];
-  projects: IdNamePair[];
+  projects: Array<IdNamePair & { prefix?: string }>;
   sprints: Array<IdNamePair & { projectId: string }>;
   statuses: Array<IdNamePair & { projectId?: string }>;
   priorities: Array<IdNamePair & { projectId?: string }>;

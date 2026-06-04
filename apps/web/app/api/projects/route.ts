@@ -34,7 +34,7 @@ export async function GET(request: Request) {
     });
     const payload = await readJsonSafely<
       {
-        projects?: Array<{ id: string; name: string }>;
+        projects?: Array<{ id: string; name: string; prefix?: string }>;
       } & ErrorPayload
     >(response);
 

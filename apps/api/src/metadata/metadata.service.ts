@@ -34,7 +34,14 @@ export class MetadataService {
 
     return {
       workspaces: workspaces.map((row) => ({ id: row.id, name: row.name })),
-      projects: projects.map((row) => ({ id: row.id, name: row.name })),
+      projects: projects.map((row) => {
+        let prefix = "";
+        try {
+          const parsed = JSON.parse(row.rawJson || "{}");
+          prefix = typeof parsed.prefix === "string" ? parsed.prefix : "";
+        } catch {}
+        return { id: row.id, name: row.name, prefix };
+      }),
       sprints: sprints.map((row) => ({ id: row.id, name: row.name, projectId: row.projectId })),
       statuses: statuses.map((row) => ({ id: row.id, name: row.name, projectId: row.projectId ?? undefined })),
       priorities: priorities.map((row) => ({ id: row.id, name: row.name, projectId: row.projectId ?? undefined })),

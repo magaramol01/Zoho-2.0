@@ -1,12 +1,16 @@
 "use client"
 
-import type { ReactNode } from "react"
+import { useMemo, type ReactNode } from "react"
 import {
   AlertCircle,
-  ArrowLeft,
+  AlertTriangle,
+  ArrowRight,
+  BarChart3,
   Calendar,
-  CheckCircle2,
   Clock,
+  LayoutGrid,
+  TrendingDown,
+  TrendingUp,
   UserRound,
 } from "lucide-react"
 
@@ -142,6 +146,7 @@ export default function TimesheetAnalytics({
   error,
   availableUsers,
   selectedUserId,
+  greythrDataMap,
   onUserChange,
   onBackToSheets,
 }: {
@@ -150,6 +155,7 @@ export default function TimesheetAnalytics({
   error: string | null
   availableUsers: AnalyticsUserOption[]
   selectedUserId: string
+  greythrDataMap: Record<string, string>
   onUserChange: (userId: string) => void
   onBackToSheets: () => void
 }) {
@@ -159,6 +165,7 @@ export default function TimesheetAnalytics({
   return (
     <div className="flex h-full min-h-0 flex-col bg-gray-50 font-sans text-sm">
       <div className="mx-auto flex w-full flex-1 min-h-0 flex-col gap-6 px-4 py-6 md:px-8 lg:px-10">
+
 
         {error ? (
           <div className="shrink-0 rounded border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800">
@@ -340,7 +347,36 @@ export default function TimesheetAnalytics({
                                     ) : null}
                                   </div>
                                 </div>
-
+                                
+                                {(() => {
+                                  const greythrTime = greythrDataMap[day.date];
+                                  if (!greythrTime) return null;
+                                  
+                                  let greythrMins = 0;
+                                  if (greythrTime.includes(":")) {
+                                    const parts = greythrTime.split(":");
+                                    greythrMins = parseInt(parts[0]) * 60 + parseInt(parts[1]);
+                                  } else if (!isNaN(Number(greythrTime))) {
+                                    greythrMins = Number(greythrTime);
+                                  }
+                                  
+                                  const diff = greythrMins - day.loggedMinutes;
+                                  const diffFormatted = formatMinutesAsClock(Math.abs(diff));
+                                  
+                                  return (
+                                    <div className="mt-3 border-t border-gray-100 pt-3">
+                                      <div className="text-[10px] font-bold text-gray-500 uppercase mb-1">
+                                        GreytHR Time
+                                      </div>
+                                      <div className="text-sm font-semibold text-gray-800">
+                                        {formatMinutesAsClock(greythrMins)}
+                                      </div>
+                                      <div className={`text-[10px] font-bold mt-0.5 ${diff >= 0 ? "text-green-600" : "text-red-600"}`}>
+                                        Diff: {diff > 0 ? "+" : diff < 0 ? "-" : ""}{diffFormatted}
+                                      </div>
+                                    </div>
+                                  );
+                                })()}
                                 {day.projects.length ? (
                                   <div className="mt-3 space-y-1">
                                     {day.projects.slice(0, 3).map((project) => (

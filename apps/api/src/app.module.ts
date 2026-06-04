@@ -13,6 +13,7 @@ import { ViewsModule } from "./views/views.module";
 import { EventsModule } from "./events/events.module";
 import { SyncModule } from "./sync/sync.module";
 import { BootstrapController } from "./bootstrap.controller";
+import { GreythrModule } from "./greythr/greythr.module";
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { BootstrapController } from "./bootstrap.controller";
     ViewsModule,
     EventsModule,
     SyncModule,
+    GreythrModule,
   ],
   controllers: [BootstrapController],
 })

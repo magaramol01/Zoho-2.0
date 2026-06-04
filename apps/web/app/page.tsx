@@ -20,6 +20,7 @@ import {
   UserRound,
   X,
 } from "lucide-react"
+import GreythrIntegration from "@/components/greythr-integration"
 
 const PINNED_TABS_STORAGE_KEY = "zoho-power-grid:pinned-project-tabs"
 const LOG_USER_STORAGE_KEY = "zoho-power-grid:preferred-log-user-id"
@@ -230,7 +231,40 @@ export default function Page() {
   const [tasksLoading, setTasksLoading] = useState(false)
   const [dataError, setDataError] = useState<string | null>(null)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
+  
+  const [greythrDataMap, setGreythrDataMap] = useState<Record<string, string>>({})
+  const [greythrRealtime, setGreythrRealtime] = useState<{ totalHours: string, currentStatus: string } | null>(null)
   const [syncingProject, setSyncingProject] = useState(false)
+
+  const handleSyncData = useCallback(async () => {
+    if (activeView === "analytics") {
+      setSyncingProject(true)
+      try {
+        const res = await fetch("http://localhost:3001/api/greythr/sync", { method: "POST" })
+        const data = await res.json()
+        if (data.error) throw new Error(data.error)
+        if (data.realtime) setGreythrRealtime(data.realtime)
+        if (data.dailyData) setGreythrDataMap(data.dailyData)
+      } catch (err) {
+        console.error("Greythr sync error:", err)
+      } finally {
+        setSyncingProject(false)
+      }
+    } else {
+      if (!activeProjectId) return
+      setSyncingProject(true)
+      try {
+        await fetch(`http://localhost:3001/api/projects/${activeProjectId}/sync`, {
+          method: "POST",
+        })
+        window.location.reload()
+      } catch (err) {
+        console.error(err)
+      } finally {
+        setSyncingProject(false)
+      }
+    }
+  }, [activeView, activeProjectId])
 
   const [logPanelTaskId, setLogPanelTaskId] = useState<string | null>(null)
   const [logsByTaskId, setLogsByTaskId] = useState<Record<string, TaskLog[]>>(
@@ -1325,32 +1359,36 @@ export default function Page() {
 
           <div className="flex items-center gap-4">
             {activeView === "analytics" && (
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-600">Track user</span>
-                <div className="relative">
-                  <UserRound className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" />
-                  <select
-                    value={analyticsUserId}
-                    onChange={(event) => setAnalyticsUserId(event.target.value)}
-                    className="h-8 w-40 lg:w-48 rounded border border-gray-300 bg-white pr-7 pl-8 text-xs text-gray-900 outline-none transition focus:border-blue-500 appearance-none"
-                  >
-                    <option value="">Use current Zoho user</option>
-                    {analyticsUserOptions.map((user) => (
-                      <option key={user.id} value={user.id}>
-                        {user.name}
-                      </option>
-                    ))}
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
-                    <svg className="h-3.5 w-3.5 fill-current" viewBox="0 0 20 20">
-                      <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" fillRule="evenodd" />
-                    </svg>
+              <div className="flex items-center gap-4">
+                <GreythrIntegration realtime={greythrRealtime} />
+                <div className="h-6 w-px bg-gray-200" />
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-600">Track user</span>
+                  <div className="relative">
+                    <UserRound className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" />
+                    <select
+                      value={analyticsUserId}
+                      onChange={(event) => setAnalyticsUserId(event.target.value)}
+                      className="h-8 w-40 lg:w-48 rounded border border-gray-300 bg-white pr-7 pl-8 text-xs text-gray-900 outline-none transition focus:border-blue-500 appearance-none"
+                    >
+                      <option value="">Use current Zoho user</option>
+                      {analyticsUserOptions.map((user) => (
+                        <option key={user.id} value={user.id}>
+                          {user.name}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                      <svg className="h-3.5 w-3.5 fill-current" viewBox="0 0 20 20">
+                        <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" fillRule="evenodd" />
+                      </svg>
+                    </div>
                   </div>
                 </div>
               </div>
             )}
             <RefreshCw 
-              onClick={handleSyncProject}
+              onClick={handleSyncData}
               className={`h-5 w-5 cursor-pointer text-gray-600 hover:text-blue-600 transition-transform ${syncingProject ? 'animate-spin text-blue-600' : ''}`} 
             />
             <MessageSquare className="h-5 w-5 cursor-pointer text-gray-600" />
@@ -1401,9 +1439,10 @@ export default function Page() {
                 <TimesheetAnalytics
                   analytics={analytics}
                   loading={analyticsLoading}
-                  error={analyticsError}
+                  error={dataError}
                   availableUsers={analyticsUserOptions}
                   selectedUserId={analyticsUserId}
+                  greythrDataMap={greythrDataMap}
                   onUserChange={setAnalyticsUserId}
                   onBackToSheets={() => setActiveView("sheet")}
                 />

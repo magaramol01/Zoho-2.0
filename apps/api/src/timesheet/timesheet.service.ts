@@ -6,7 +6,7 @@ import type {
   TimesheetDraft,
   TimesheetLog,
 } from "@zoho-power-grid/shared";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { DatabaseService } from "../db/database.service";
 import {
@@ -105,72 +105,77 @@ const resolveOwnerFromRawJson = (rawJson: string | null) => {
   };
 };
 
-const parseIsoDate = (value: string) => new Date(`${value}T00:00:00Z`);
-
-const toIsoDate = (value: Date) => value.toISOString().slice(0, 10);
-
-const getLocalIsoDate = (value = new Date()) =>
-  `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(
-    2,
-    "0",
-  )}-${String(value.getDate()).padStart(2, "0")}`;
-
-const addDays = (value: Date, days: number) => {
-  const next = new Date(value);
-  next.setUTCDate(next.getUTCDate() + days);
-  return next;
-};
-
-const startOfIsoWeek = (value: Date) => {
-  const next = new Date(value);
-  const weekday = next.getUTCDay() || 7;
-  next.setUTCDate(next.getUTCDate() - weekday + 1);
-  next.setUTCHours(0, 0, 0, 0);
-  return next;
-};
-
-const getIsoWeekNumber = (value: Date) => {
-  const next = new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate()));
-  const weekday = next.getUTCDay() || 7;
-  next.setUTCDate(next.getUTCDate() + 4 - weekday);
-  const yearStart = new Date(Date.UTC(next.getUTCFullYear(), 0, 1));
-  return Math.ceil(((next.getTime() - yearStart.getTime()) / 86_400_000 + 1) / 7);
-};
-
-const formatShortDate = (value: Date) =>
-  `${String(value.getUTCDate()).padStart(2, "0")} ${MONTH_LABELS[value.getUTCMonth()]}`;
-
 const buildStoredRawJson = (
-  existingRawJson: string | null,
-  patch: Record<string, unknown>,
+  rawJson: string | null,
+  patch: Partial<TimesheetLog>,
 ) => {
-  const nextPayload = {
-    ...parseStoredRawJson(existingRawJson),
+  const parsed = parseStoredRawJson(rawJson);
+  return JSON.stringify({
+    ...parsed,
     ...patch,
-  };
+  });
+};
 
-  return JSON.stringify(nextPayload);
+const getIsoWeekNumber = (date: Date) => {
+  const temp = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = temp.getUTCDay() || 7;
+  temp.setUTCDate(temp.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(temp.getUTCFullYear(), 0, 1));
+  return Math.ceil(((temp.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+};
+
+const parseIsoDate = (value: string) => {
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(Date.UTC(year!, month! - 1, day!));
+};
+
+const startOfIsoWeek = (date: Date) => {
+  const day = date.getUTCDay();
+  const diff = date.getUTCDate() - day + (day === 0 ? -6 : 1);
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), diff));
+};
+
+const addDays = (date: Date, days: number) => {
+  const result = new Date(date.getTime());
+  result.setUTCDate(result.getUTCDate() + days);
+  return result;
+};
+
+const toIsoDate = (date: Date) => date.toISOString().slice(0, 10);
+
+const getLocalIsoDate = () => {
+  const local = new Date();
+  const year = local.getFullYear();
+  const month = String(local.getMonth() + 1).padStart(2, "0");
+  const day = String(local.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const formatShortDate = (date: Date) => {
+  const day = date.getUTCDate();
+  const month = MONTH_LABELS[date.getUTCMonth()] ?? "";
+  return `${day} ${month}`;
 };
 
 @Injectable()
 export class TimesheetService {
   constructor(
     private readonly db: DatabaseService,
-    private readonly eventBus: EventBusService,
     private readonly zohoApiClient: ZohoApiClient,
     private readonly zohoNormalizer: ZohoNormalizer,
     private readonly syncService: SyncService,
+    private readonly eventBus: EventBusService,
   ) {}
 
-  async listLogs(query: TimesheetQueryDto): Promise<TimesheetLog[]> {
-    await this.syncLogsIfStale(query);
+  async listLogs(userId: string, query: TimesheetQueryDto): Promise<TimesheetLog[]> {
+    await this.syncLogsIfStale(userId, query);
 
     const [rows, userNameLookup, projectNameLookup] = await Promise.all([
       query.taskId
         ? this.db.db
             .select()
             .from(timesheetLogCacheTable)
-            .where(eq(timesheetLogCacheTable.taskId, query.taskId))
+            .where(and(eq(timesheetLogCacheTable.taskId, query.taskId), eq(timesheetLogCacheTable.ownerId, userId)))
             .orderBy(
               desc(timesheetLogCacheTable.date),
               desc(timesheetLogCacheTable.updatedAt),
@@ -179,7 +184,7 @@ export class TimesheetService {
           ? this.db.db
               .select()
               .from(timesheetLogCacheTable)
-              .where(eq(timesheetLogCacheTable.projectId, query.projectId))
+              .where(and(eq(timesheetLogCacheTable.projectId, query.projectId), eq(timesheetLogCacheTable.ownerId, userId)))
               .orderBy(
                 desc(timesheetLogCacheTable.date),
                 desc(timesheetLogCacheTable.updatedAt),
@@ -187,12 +192,13 @@ export class TimesheetService {
           : this.db.db
               .select()
               .from(timesheetLogCacheTable)
+              .where(eq(timesheetLogCacheTable.ownerId, userId))
               .orderBy(
                 desc(timesheetLogCacheTable.date),
                 desc(timesheetLogCacheTable.updatedAt),
               ),
-      this.getUserNameLookup(),
-      this.getProjectNameLookup(),
+      this.getUserNameLookup(userId),
+      this.getProjectNameLookup(userId),
     ]);
 
     return rows.map((row) =>
@@ -201,9 +207,10 @@ export class TimesheetService {
   }
 
   async getAnalytics(
+    userId: string,
     query: TimesheetAnalyticsQueryDto,
   ): Promise<TimesheetAnalyticsSummary> {
-    await this.syncLogsIfStale({});
+    await this.syncLogsIfStale(userId, {});
 
     const [
       rows,
@@ -217,13 +224,14 @@ export class TimesheetService {
       this.db.db
         .select()
         .from(timesheetLogCacheTable)
+        .where(eq(timesheetLogCacheTable.ownerId, userId))
         .orderBy(desc(timesheetLogCacheTable.date), desc(timesheetLogCacheTable.updatedAt)),
-      this.getUserNameLookup(),
-      this.getProjectNameLookup(),
-      this.syncService.getSyncValue("current_zoho_internal_user_id"),
-      this.syncService.getSyncValue("current_zoho_internal_user_name"),
-      this.syncService.getSyncValue("current_zoho_user_id"),
-      this.syncService.getSyncValue("current_zoho_user_name"),
+      this.getUserNameLookup(userId),
+      this.getProjectNameLookup(userId),
+      this.syncService.getSyncValue(userId, "current_zoho_internal_user_id"),
+      this.syncService.getSyncValue(userId, "current_zoho_internal_user_name"),
+      this.syncService.getSyncValue(userId, "current_zoho_user_id"),
+      this.syncService.getSyncValue(userId, "current_zoho_user_name"),
     ]);
 
     const selectedWeekCount = Math.min(
@@ -426,21 +434,22 @@ export class TimesheetService {
     };
   }
 
-  private async syncLogsIfStale(query: TimesheetQueryDto) {
-    if (!(await this.zohoApiClient.canUseZoho())) {
+  private async syncLogsIfStale(userId: string, query: TimesheetQueryDto) {
+    if (!(await this.zohoApiClient.canUseZoho(userId))) {
       return;
     }
 
-    await this.syncService.syncMetadata();
+    await this.syncService.syncMetadata(userId);
 
     const [latestRow, userNameLookup] = await Promise.all([
       this.db.db
         .select()
         .from(timesheetLogCacheTable)
+        .where(eq(timesheetLogCacheTable.ownerId, userId))
         .orderBy(desc(timesheetLogCacheTable.syncedAt))
         .limit(1)
         .then((rows) => rows[0]),
-      this.getUserNameLookup(),
+      this.getUserNameLookup(userId),
     ]);
 
     if (
@@ -454,12 +463,12 @@ export class TimesheetService {
       ? await this.db.db
           .select()
           .from(projectCacheTable)
-          .where(eq(projectCacheTable.id, query.projectId))
-      : await this.db.db.select().from(projectCacheTable);
+          .where(and(eq(projectCacheTable.id, query.projectId), eq(projectCacheTable.ownerId, userId)))
+      : await this.db.db.select().from(projectCacheTable).where(eq(projectCacheTable.ownerId, userId));
 
     for (const project of projects) {
       try {
-        const payload = await this.zohoApiClient.request<unknown>({
+        const payload = await this.zohoApiClient.request<unknown>(userId, {
           path: `/zsapi/team/${project.workspaceId}/projects/${project.id}/timesheet/`,
           query: {
             action: "data",
@@ -479,6 +488,7 @@ export class TimesheetService {
             .insert(timesheetLogCacheTable)
             .values({
               id: log.id,
+              ownerId: userId,
               taskId: log.taskId,
               projectId: log.projectId || project.id,
               projectName: log.projectName || project.name,
@@ -494,7 +504,7 @@ export class TimesheetService {
               syncedAt,
             })
             .onConflictDoUpdate({
-              target: timesheetLogCacheTable.id,
+              target: [timesheetLogCacheTable.id, timesheetLogCacheTable.ownerId],
               set: {
                 taskId: log.taskId,
                 projectId: log.projectId || project.id,
@@ -514,25 +524,25 @@ export class TimesheetService {
             });
         }
       } catch (error) {
-        console.warn(`[TimesheetService] Failed to sync timesheets for project ${project.id}:`, error instanceof Error ? error.message : String(error));
+        console.warn(`[TimesheetService] Failed to sync timesheets for project ${project.id} user ${userId}:`, error instanceof Error ? error.message : String(error));
       }
     }
   }
 
-  async createLogs(logs: TimesheetDraft[]) {
+  async createLogs(userId: string, logs: TimesheetDraft[]) {
     for (const draft of logs) {
       let id = nanoid();
       let taskName: string | null = null;
       let projectName = "Unknown project";
       let workspaceId: string | null = null;
       let zohoResponse: unknown = null;
-      const resolvedUser = await this.resolveLogUserContext(draft.userId);
+      const resolvedUser = await this.resolveLogUserContext(userId, draft.userId);
 
       if (draft.taskId) {
         const [task] = await this.db.db
           .select()
           .from(taskCacheTable)
-          .where(eq(taskCacheTable.id, draft.taskId))
+          .where(and(eq(taskCacheTable.id, draft.taskId), eq(taskCacheTable.ownerId, userId)))
           .limit(1);
         if (task) {
           taskName = task.name;
@@ -548,13 +558,13 @@ export class TimesheetService {
                   : Math.max(0, task.remainingMinutes - draft.durationMinutes),
               updatedAt: new Date().toISOString(),
             })
-            .where(eq(taskCacheTable.id, task.id));
+            .where(and(eq(taskCacheTable.id, task.id), eq(taskCacheTable.ownerId, userId)));
         }
       }
 
-      if ((await this.zohoApiClient.canUseZoho()) && workspaceId) {
+      if ((await this.zohoApiClient.canUseZoho(userId)) && workspaceId) {
         if (draft.taskId && draft.sprintId) {
-          zohoResponse = await this.zohoApiClient.request({
+          zohoResponse = await this.zohoApiClient.request(userId, {
             path: `/zsapi/team/${workspaceId}/projects/${draft.projectId}/sprints/${draft.sprintId}/item/${draft.taskId}/timesheet/`,
             method: "POST",
             query: {
@@ -567,7 +577,7 @@ export class TimesheetService {
             },
           });
         } else {
-          zohoResponse = await this.zohoApiClient.request({
+          zohoResponse = await this.zohoApiClient.request(userId, {
             path: `/zsapi/team/${workspaceId}/projects/${draft.projectId}/loghours/`,
             method: "POST",
             query: {
@@ -589,6 +599,7 @@ export class TimesheetService {
 
       await this.db.db.insert(timesheetLogCacheTable).values({
         id,
+        ownerId: userId,
         taskId: draft.taskId ?? null,
         projectId: draft.projectId,
         projectName,
@@ -613,11 +624,11 @@ export class TimesheetService {
     return { ok: true, count: logs.length };
   }
 
-  async updateLog(logId: string, body: UpdateTimesheetLogDto) {
+  async updateLog(userId: string, logId: string, body: UpdateTimesheetLogDto) {
     const [existing] = await this.db.db
       .select()
       .from(timesheetLogCacheTable)
-      .where(eq(timesheetLogCacheTable.id, logId))
+      .where(and(eq(timesheetLogCacheTable.id, logId), eq(timesheetLogCacheTable.ownerId, userId)))
       .limit(1);
 
     if (!existing) {
@@ -627,14 +638,15 @@ export class TimesheetService {
     const [project] = await this.db.db
       .select()
       .from(projectCacheTable)
-      .where(eq(projectCacheTable.id, existing.projectId))
+      .where(and(eq(projectCacheTable.id, existing.projectId), eq(projectCacheTable.ownerId, userId)))
       .limit(1);
     const resolvedUser = await this.resolveLogUserContext(
+      userId,
       body.userId ?? existing.userId ?? resolveOwnerFromRawJson(existing.rawJson).userId,
     );
 
-    if ((await this.zohoApiClient.canUseZoho()) && project?.workspaceId) {
-      await this.zohoApiClient.request({
+    if ((await this.zohoApiClient.canUseZoho(userId)) && project?.workspaceId) {
+      await this.zohoApiClient.request(userId, {
         path: `/zsapi/team/${project.workspaceId}/projects/${existing.projectId}/timesheet/${logId}/`,
         method: "POST",
         query: {
@@ -670,10 +682,10 @@ export class TimesheetService {
         syncedAt: updatedAt,
         updatedAt,
       })
-      .where(eq(timesheetLogCacheTable.id, logId));
+      .where(and(eq(timesheetLogCacheTable.id, logId), eq(timesheetLogCacheTable.ownerId, userId)));
 
     if (existing.taskId) {
-      await this.recalculateTaskLoggedMinutes(existing.taskId);
+      await this.recalculateTaskLoggedMinutes(userId, existing.taskId);
     }
 
     this.eventBus.emit({ type: "timesheet-updated", at: updatedAt });
@@ -681,23 +693,22 @@ export class TimesheetService {
     const [row] = await this.db.db
       .select()
       .from(timesheetLogCacheTable)
-      .where(eq(timesheetLogCacheTable.id, logId))
+      .where(and(eq(timesheetLogCacheTable.id, logId), eq(timesheetLogCacheTable.ownerId, userId)))
       .limit(1);
 
     const [userNameLookup, projectNameLookup] = await Promise.all([
-      this.getUserNameLookup(),
-      this.getProjectNameLookup(),
+      this.getUserNameLookup(userId),
+      this.getProjectNameLookup(userId),
     ]);
 
     return this.mapLogRow(row!, userNameLookup, projectNameLookup);
   }
 
-
-  async deleteLog(logId: string) {
+  async deleteLog(userId: string, logId: string) {
     const [existing] = await this.db.db
       .select()
       .from(timesheetLogCacheTable)
-      .where(eq(timesheetLogCacheTable.id, logId))
+      .where(and(eq(timesheetLogCacheTable.id, logId), eq(timesheetLogCacheTable.ownerId, userId)))
       .limit(1);
 
     if (!existing) {
@@ -707,27 +718,27 @@ export class TimesheetService {
     const [project] = await this.db.db
       .select()
       .from(projectCacheTable)
-      .where(eq(projectCacheTable.id, existing.projectId))
+      .where(and(eq(projectCacheTable.id, existing.projectId), eq(projectCacheTable.ownerId, userId)))
       .limit(1);
 
-    if ((await this.zohoApiClient.canUseZoho()) && project?.workspaceId) {
+    if ((await this.zohoApiClient.canUseZoho(userId)) && project?.workspaceId) {
       try {
-        await this.zohoApiClient.request({
+        await this.zohoApiClient.request(userId, {
           path: `/zsapi/team/${project.workspaceId}/projects/${existing.projectId}/timesheet/${logId}/`,
           method: "DELETE",
           query: { action: "deletelog" },
         });
       } catch {
-        // If Zoho delete fails (e.g., log not in Zoho), still remove from local cache
+        // If Zoho delete fails, still remove from local cache
       }
     }
 
     await this.db.db
       .delete(timesheetLogCacheTable)
-      .where(eq(timesheetLogCacheTable.id, logId));
+      .where(and(eq(timesheetLogCacheTable.id, logId), eq(timesheetLogCacheTable.ownerId, userId)));
 
     if (existing.taskId) {
-      await this.recalculateTaskLoggedMinutes(existing.taskId);
+      await this.recalculateTaskLoggedMinutes(userId, existing.taskId);
     }
 
     const deletedAt = new Date().toISOString();
@@ -736,11 +747,11 @@ export class TimesheetService {
     return { ok: true, deletedAt };
   }
 
-  private async recalculateTaskLoggedMinutes(taskId: string) {
+  private async recalculateTaskLoggedMinutes(userId: string, taskId: string) {
     const [task] = await this.db.db
       .select()
       .from(taskCacheTable)
-      .where(eq(taskCacheTable.id, taskId))
+      .where(and(eq(taskCacheTable.id, taskId), eq(taskCacheTable.ownerId, userId)))
       .limit(1);
 
     if (!task) {
@@ -750,7 +761,7 @@ export class TimesheetService {
     const logs = await this.db.db
       .select()
       .from(timesheetLogCacheTable)
-      .where(eq(timesheetLogCacheTable.taskId, taskId));
+      .where(and(eq(timesheetLogCacheTable.taskId, taskId), eq(timesheetLogCacheTable.ownerId, userId)));
     const loggedMinutes = logs.reduce(
       (sum, row) => sum + row.durationMinutes,
       0,
@@ -766,7 +777,7 @@ export class TimesheetService {
             : Math.max(0, task.estimatedMinutes - loggedMinutes),
         updatedAt: new Date().toISOString(),
       })
-      .where(eq(taskCacheTable.id, taskId));
+      .where(and(eq(taskCacheTable.id, taskId), eq(taskCacheTable.ownerId, userId)));
   }
 
   private mapLogRow(
@@ -799,17 +810,17 @@ export class TimesheetService {
     };
   }
 
-  private async getUserNameLookup() {
-    const users = await this.db.db.select().from(userCacheTable);
+  private async getUserNameLookup(userId: string) {
+    const users = await this.db.db.select().from(userCacheTable).where(eq(userCacheTable.ownerId, userId));
     return new Map(users.map((row) => [row.id, row.name]));
   }
 
-  private async getProjectNameLookup() {
-    const projects = await this.db.db.select().from(projectCacheTable);
+  private async getProjectNameLookup(userId: string) {
+    const projects = await this.db.db.select().from(projectCacheTable).where(eq(projectCacheTable.ownerId, userId));
     return new Map(projects.map((row) => [row.id, row.name]));
   }
 
-  private async resolveLogUserContext(preferredUserId?: string | null) {
+  private async resolveLogUserContext(userId: string, preferredUserId?: string | null) {
     const [
       fallbackUser,
       userNameLookup,
@@ -819,15 +830,15 @@ export class TimesheetService {
       currentZohoUserName,
     ] =
       await Promise.all([
-        this.db.db.select().from(userCacheTable).limit(1).then((rows) => rows[0] ?? null),
-        this.getUserNameLookup(),
-        this.syncService.getSyncValue("current_zoho_internal_user_id"),
-        this.syncService.getSyncValue("current_zoho_internal_user_name"),
-        this.syncService.getSyncValue("current_zoho_user_id"),
-        this.syncService.getSyncValue("current_zoho_user_name"),
+        this.db.db.select().from(userCacheTable).where(eq(userCacheTable.ownerId, userId)).limit(1).then((rows) => rows[0] ?? null),
+        this.getUserNameLookup(userId),
+        this.syncService.getSyncValue(userId, "current_zoho_internal_user_id"),
+        this.syncService.getSyncValue(userId, "current_zoho_internal_user_name"),
+        this.syncService.getSyncValue(userId, "current_zoho_user_id"),
+        this.syncService.getSyncValue(userId, "current_zoho_user_name"),
       ]);
 
-    const userId =
+    const resolvedUserId =
       preferredUserId?.trim() ||
       currentInternalUserId ||
       currentZohoUserId ||
@@ -835,12 +846,12 @@ export class TimesheetService {
       null;
 
     return {
-      userId,
+      userId: resolvedUserId,
       userName:
-        (userId ? userNameLookup.get(userId) ?? null : null) ||
-        (userId === currentInternalUserId ? currentInternalUserName : null) ||
-        (userId === currentZohoUserId ? currentZohoUserName : null) ||
-        (!userId || userId === fallbackUser?.id ? fallbackUser?.name ?? null : null) ||
+        (resolvedUserId ? userNameLookup.get(resolvedUserId) : null) ||
+        (resolvedUserId === currentInternalUserId ? currentInternalUserName : null) ||
+        (resolvedUserId === currentZohoUserId ? currentZohoUserName : null) ||
+        (!resolvedUserId || resolvedUserId === fallbackUser?.id ? fallbackUser?.name ?? null : null) ||
         null,
     };
   }

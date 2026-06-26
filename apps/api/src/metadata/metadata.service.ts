@@ -1,4 +1,5 @@
 import { Injectable } from "@nestjs/common";
+import { eq } from "drizzle-orm";
 import type { MetadataBundle } from "@zoho-power-grid/shared";
 import { DatabaseService } from "../db/database.service";
 import {
@@ -19,17 +20,17 @@ export class MetadataService {
     private readonly syncService: SyncService,
   ) {}
 
-  async getMetadata(): Promise<MetadataBundle> {
-    await this.syncService.syncMetadata();
+  async getMetadata(userId: string): Promise<MetadataBundle> {
+    await this.syncService.syncMetadata(userId);
 
     const [workspaces, projects, sprints, statuses, priorities, users, tags] = await Promise.all([
-      this.db.db.select().from(workspaceCacheTable),
-      this.db.db.select().from(projectCacheTable),
-      this.db.db.select().from(sprintCacheTable),
-      this.db.db.select().from(statusCacheTable),
-      this.db.db.select().from(priorityCacheTable),
-      this.db.db.select().from(userCacheTable),
-      this.db.db.select().from(tagCacheTable),
+      this.db.db.select().from(workspaceCacheTable).where(eq(workspaceCacheTable.ownerId, userId)),
+      this.db.db.select().from(projectCacheTable).where(eq(projectCacheTable.ownerId, userId)),
+      this.db.db.select().from(sprintCacheTable).where(eq(sprintCacheTable.ownerId, userId)),
+      this.db.db.select().from(statusCacheTable).where(eq(statusCacheTable.ownerId, userId)),
+      this.db.db.select().from(priorityCacheTable).where(eq(priorityCacheTable.ownerId, userId)),
+      this.db.db.select().from(userCacheTable).where(eq(userCacheTable.ownerId, userId)),
+      this.db.db.select().from(tagCacheTable).where(eq(tagCacheTable.ownerId, userId)),
     ]);
 
     return {

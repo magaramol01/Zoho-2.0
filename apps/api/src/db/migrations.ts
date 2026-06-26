@@ -220,4 +220,189 @@ export const migrations = [
       ALTER TABLE timesheet_log_cache ADD COLUMN user_name TEXT;
     `,
   },
+  {
+    id: "0004_multiuser_isolation",
+    sql: `
+      DROP TABLE IF EXISTS workspace_cache;
+      DROP TABLE IF EXISTS project_cache;
+      DROP TABLE IF EXISTS sprint_cache;
+      DROP TABLE IF EXISTS status_cache;
+      DROP TABLE IF EXISTS priority_cache;
+      DROP TABLE IF EXISTS user_cache;
+      DROP TABLE IF EXISTS tag_cache;
+      DROP TABLE IF EXISTS task_cache;
+      DROP TABLE IF EXISTS timesheet_log_cache;
+      DROP TABLE IF EXISTS sync_state;
+      DROP TABLE IF EXISTS mutation_audit;
+
+      CREATE TABLE workspace_cache (
+        id TEXT NOT NULL,
+        owner_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        raw_json TEXT,
+        synced_at TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id, owner_id)
+      );
+
+      CREATE TABLE project_cache (
+        id TEXT NOT NULL,
+        owner_id TEXT NOT NULL,
+        workspace_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        status TEXT,
+        raw_json TEXT,
+        synced_at TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id, owner_id)
+      );
+
+      CREATE TABLE sprint_cache (
+        id TEXT NOT NULL,
+        owner_id TEXT NOT NULL,
+        project_id TEXT NOT NULL,
+        workspace_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        state TEXT,
+        raw_json TEXT,
+        synced_at TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id, owner_id)
+      );
+
+      CREATE TABLE status_cache (
+        id TEXT NOT NULL,
+        owner_id TEXT NOT NULL,
+        workspace_id TEXT NOT NULL,
+        project_id TEXT,
+        name TEXT NOT NULL,
+        color TEXT,
+        raw_json TEXT,
+        synced_at TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id, owner_id)
+      );
+
+      CREATE TABLE priority_cache (
+        id TEXT NOT NULL,
+        owner_id TEXT NOT NULL,
+        workspace_id TEXT NOT NULL,
+        project_id TEXT,
+        name TEXT NOT NULL,
+        raw_json TEXT,
+        synced_at TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id, owner_id)
+      );
+
+      CREATE TABLE user_cache (
+        id TEXT NOT NULL,
+        owner_id TEXT NOT NULL,
+        workspace_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        email TEXT,
+        raw_json TEXT,
+        synced_at TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id, owner_id)
+      );
+
+      CREATE TABLE tag_cache (
+        id TEXT NOT NULL,
+        owner_id TEXT NOT NULL,
+        workspace_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        color TEXT,
+        raw_json TEXT,
+        synced_at TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id, owner_id)
+      );
+
+      CREATE TABLE task_cache (
+        id TEXT NOT NULL,
+        owner_id TEXT NOT NULL,
+        item_no TEXT NOT NULL,
+        description TEXT,
+        workspace_id TEXT NOT NULL,
+        project_id TEXT NOT NULL,
+        project_name TEXT NOT NULL,
+        sprint_id TEXT,
+        sprint_name TEXT,
+        name TEXT NOT NULL,
+        status_id TEXT NOT NULL,
+        status_name TEXT NOT NULL,
+        priority_id TEXT,
+        priority_name TEXT,
+        assignee_ids_json TEXT NOT NULL DEFAULT '[]',
+        assignee_names_json TEXT NOT NULL DEFAULT '[]',
+        due_date TEXT,
+        estimated_minutes INTEGER,
+        logged_minutes INTEGER NOT NULL DEFAULT 0,
+        remaining_minutes INTEGER,
+        tag_ids_json TEXT NOT NULL DEFAULT '[]',
+        tag_names_json TEXT NOT NULL DEFAULT '[]',
+        raw_json TEXT,
+        synced_at TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id, owner_id)
+      );
+
+      CREATE TABLE timesheet_log_cache (
+        id TEXT NOT NULL,
+        owner_id TEXT NOT NULL,
+        task_id TEXT,
+        project_id TEXT NOT NULL,
+        project_name TEXT NOT NULL,
+        sprint_id TEXT,
+        task_name TEXT,
+        date TEXT NOT NULL,
+        duration_minutes INTEGER NOT NULL,
+        notes TEXT NOT NULL DEFAULT '',
+        user_id TEXT,
+        user_name TEXT,
+        billable INTEGER NOT NULL DEFAULT 0,
+        raw_json TEXT,
+        synced_at TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id, owner_id)
+      );
+
+      CREATE TABLE sync_state (
+        key TEXT NOT NULL,
+        owner_id TEXT NOT NULL,
+        value TEXT NOT NULL,
+        last_success_at TEXT,
+        last_error_at TEXT,
+        last_error_message TEXT,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (key, owner_id)
+      );
+
+      CREATE TABLE mutation_audit (
+        id TEXT NOT NULL,
+        owner_id TEXT NOT NULL,
+        entity_type TEXT NOT NULL,
+        entity_id TEXT NOT NULL,
+        action TEXT NOT NULL,
+        status TEXT NOT NULL,
+        payload_json TEXT NOT NULL DEFAULT '{}',
+        response_json TEXT,
+        error_message TEXT,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id, owner_id)
+      );
+    `,
+  },
 ];

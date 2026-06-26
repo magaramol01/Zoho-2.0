@@ -21,8 +21,8 @@ export class AuthController {
     @Query("accounts-server") accountsServer: string | undefined,
     @Res() res: Response,
   ) {
-    await this.authService.handleCallback({ code, accountsServer });
-    await this.authService.ensureLocalSession(res);
+    const userId = await this.authService.handleCallback({ code, accountsServer });
+    await this.authService.ensureLocalSession(userId, res);
     return res.redirect(this.config.appUrl);
   }
 

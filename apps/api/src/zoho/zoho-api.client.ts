@@ -18,8 +18,8 @@ export class ZohoApiClient {
     private readonly authService: AuthService,
   ) {}
 
-  private async getConnection() {
-    const [connection] = await this.db.db.select().from(zohoConnectionsTable).limit(1);
+  private async getConnection(userId: string) {
+    const [connection] = await this.db.db.select().from(zohoConnectionsTable).where(eq(zohoConnectionsTable.userId, userId)).limit(1);
     if (!connection) {
       throw new UnauthorizedException("Connect Zoho Sprints first");
     }
@@ -67,8 +67,11 @@ export class ZohoApiClient {
     };
   }
 
-  private buildUrl(path: string, query?: QueryParams) {
-    const base = this.config.zohoApiBaseUrl.replace(/\/$/, "");
+  private buildUrl(apiDomain: string | null | undefined, path: string, query?: QueryParams) {
+    let base = (apiDomain ?? this.config.zohoApiBaseUrl).replace(/\/$/, "");
+    if (base.includes("sprints.zoho.")) {
+      base = base.replace("sprints.zoho.", "sprintsapi.zoho.");
+    }
     const url = new URL(`${base}${path.startsWith("/") ? path : `/${path}`}`);
     Object.entries(query ?? {}).forEach(([key, value]) => {
       if (value === undefined || value === null || value === "") {
@@ -80,15 +83,18 @@ export class ZohoApiClient {
     return url;
   }
 
-  async request<T>(options: {
-    path: string;
-    method?: "GET" | "POST" | "DELETE";
-    query?: QueryParams;
-    body?: BodyInit | null;
-    headers?: HeadersInit;
-  }): Promise<T> {
-    const connection = await this.getConnection();
-    const url = this.buildUrl(options.path, options.query);
+  async request<T>(
+    userId: string,
+    options: {
+      path: string;
+      method?: "GET" | "POST" | "DELETE";
+      query?: QueryParams;
+      body?: BodyInit | null;
+      headers?: HeadersInit;
+    }
+  ): Promise<T> {
+    const connection = await this.getConnection(userId);
+    const url = this.buildUrl(connection.apiDomain, options.path, options.query);
 
     const attempt = async () => {
       const response = await fetch(url, {
@@ -138,9 +144,9 @@ export class ZohoApiClient {
     }
   }
 
-  async canUseZoho() {
+  async canUseZoho(userId: string) {
     try {
-      await this.authService.requireConnection();
+      await this.authService.requireConnection(userId);
       return true;
     } catch {
       return false;

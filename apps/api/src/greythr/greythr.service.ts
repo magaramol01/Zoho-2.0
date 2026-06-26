@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { DatabaseService } from '../db/database.service';
 import { workspaceCacheTable } from '../db/schema';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { Builder, By, Key, until } from 'selenium-webdriver';
 import chrome from 'selenium-webdriver/chrome';
 import axios from 'axios';
@@ -12,11 +12,11 @@ export class GreythrService {
 
   constructor(private readonly db: DatabaseService) {}
 
-  async getCredentials() {
+  async getCredentials(userId: string) {
     const records = await this.db.db
       .select()
       .from(workspaceCacheTable)
-      .where(eq(workspaceCacheTable.id, 'greythr_creds'));
+      .where(and(eq(workspaceCacheTable.id, 'greythr_creds'), eq(workspaceCacheTable.ownerId, userId)));
     
     if (records.length > 0 && records[0].rawJson) {
       try {
@@ -28,7 +28,7 @@ export class GreythrService {
     return null;
   }
 
-  async saveCredentials(username?: string, password?: string) {
+  async saveCredentials(userId: string, username?: string, password?: string) {
     const creds = JSON.stringify({ username, password });
     const now = new Date().toISOString();
     
@@ -36,12 +36,13 @@ export class GreythrService {
       .insert(workspaceCacheTable)
       .values({
         id: 'greythr_creds',
+        ownerId: userId,
         name: 'greythr_creds',
         rawJson: creds,
         syncedAt: now,
       })
       .onConflictDoUpdate({
-        target: workspaceCacheTable.id,
+        target: [workspaceCacheTable.id, workspaceCacheTable.ownerId],
         set: {
           rawJson: creds,
           syncedAt: now,
@@ -50,8 +51,8 @@ export class GreythrService {
       });
   }
 
-  async syncGreythr() {
-    const creds = await this.getCredentials();
+  async syncGreythr(userId: string) {
+    const creds = await this.getCredentials(userId);
     if (!creds || !creds.username || !creds.password) {
       throw new Error('Greythr credentials not configured.');
     }
@@ -224,7 +225,7 @@ export class GreythrService {
             totalHours: totalHoursDisplay,
             currentStatus: currentStatus ? "IN" : "OUT"
          };
-      }
+       }
 
       return { dailyData: dailyDataMap, realtime: realtimeData };
     } catch (err: any) {
@@ -233,4 +234,3 @@ export class GreythrService {
     }
   }
 }
-

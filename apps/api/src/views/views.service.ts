@@ -1,6 +1,6 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import type { SavedView } from "@zoho-power-grid/shared";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { DatabaseService } from "../db/database.service";
 import { savedViewsTable } from "../db/schema";
@@ -23,26 +23,31 @@ export class ViewsService {
     };
   }
 
-  async listViews() {
-    const rows = await this.db.db.select().from(savedViewsTable);
+  async listViews(userId: string) {
+    const rows = await this.db.db.select().from(savedViewsTable).where(eq(savedViewsTable.userId, userId));
     return rows.map((row) => this.toSavedView(row));
   }
 
-  async createView(body: SaveViewDto) {
-    const user = await this.db.ensureDefaultUser();
+  async createView(userId: string, body: SaveViewDto) {
+    const viewId = nanoid();
     await this.db.db.insert(savedViewsTable).values({
-      id: nanoid(),
-      userId: user.id,
+      id: viewId,
+      userId: userId,
       name: body.name,
       route: body.route,
       filtersJson: JSON.stringify(body.filters),
       columnsJson: JSON.stringify(body.columns),
       sortJson: JSON.stringify(body.sort),
     });
-    return this.listViews();
+    return this.listViews(userId);
   }
 
-  async updateView(viewId: string, body: SaveViewDto) {
+  async updateView(userId: string, viewId: string, body: SaveViewDto) {
+    const [existing] = await this.db.db.select().from(savedViewsTable).where(and(eq(savedViewsTable.id, viewId), eq(savedViewsTable.userId, userId))).limit(1);
+    if (!existing) {
+      throw new NotFoundException("Saved view not found");
+    }
+
     await this.db.db.update(savedViewsTable).set({
       name: body.name,
       route: body.route,
@@ -50,7 +55,7 @@ export class ViewsService {
       columnsJson: JSON.stringify(body.columns),
       sortJson: JSON.stringify(body.sort),
       updatedAt: new Date().toISOString(),
-    }).where(eq(savedViewsTable.id, viewId));
-    return this.listViews();
+    }).where(and(eq(savedViewsTable.id, viewId), eq(savedViewsTable.userId, userId)));
+    return this.listViews(userId);
   }
 }

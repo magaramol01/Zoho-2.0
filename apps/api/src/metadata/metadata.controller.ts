@@ -1,5 +1,6 @@
 import { Controller, Get, UseGuards } from "@nestjs/common";
 import { SessionAuthGuard } from "../auth/session-auth.guard";
+import { CurrentUser } from "../auth/current-user.decorator";
 import { MetadataService } from "./metadata.service";
 
 @Controller("metadata")
@@ -8,7 +9,7 @@ export class MetadataController {
   constructor(private readonly metadataService: MetadataService) {}
 
   @Get()
-  getMetadata() {
-    return this.metadataService.getMetadata();
+  getMetadata(@CurrentUser() user: { id: string }) {
+    return this.metadataService.getMetadata(user.id);
   }
 }

@@ -1,6 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { Cron, CronExpression } from "@nestjs/schedule";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { DatabaseService } from "../db/database.service";
 import { EventBusService } from "../events/event-bus.service";
 import {
@@ -12,6 +12,7 @@ import {
   tagCacheTable,
   userCacheTable,
   workspaceCacheTable,
+  zohoConnectionsTable,
 } from "../db/schema";
 import { ZohoApiClient } from "../zoho/zoho-api.client";
 import { ZohoNormalizer } from "../zoho/zoho-normalizer";
@@ -46,17 +47,29 @@ export class SyncService {
 
   @Cron(CronExpression.EVERY_MINUTE)
   async runMetadataSyncCron() {
-    await this.syncMetadata();
+    const connections = await this.db.db.select().from(zohoConnectionsTable);
+    for (const connection of connections) {
+      try {
+        await this.syncMetadata(connection.userId);
+      } catch (error) {
+        this.logger.warn(
+          `Cron metadata sync skipped for user ${connection.userId}: ${
+            error instanceof Error ? error.message : "unknown error"
+          }`,
+        );
+      }
+    }
   }
 
-  async syncMetadata(force = false) {
-    if (!(await this.zohoApiClient.canUseZoho())) {
+  async syncMetadata(userId: string, force = false) {
+    if (!(await this.zohoApiClient.canUseZoho(userId))) {
       return;
     }
 
     const [latestWorkspace] = await this.db.db
       .select()
       .from(workspaceCacheTable)
+      .where(eq(workspaceCacheTable.ownerId, userId))
       .orderBy(desc(workspaceCacheTable.syncedAt))
       .limit(1);
 
@@ -71,7 +84,7 @@ export class SyncService {
     const syncedAt = new Date().toISOString();
 
     try {
-      const workspacesPayload = await this.zohoApiClient.request<unknown>({
+      const workspacesPayload = await this.zohoApiClient.request<unknown>(userId, {
         path: "/zsapi/teams/",
       });
 
@@ -92,12 +105,13 @@ export class SyncService {
           .insert(workspaceCacheTable)
           .values({
             id: workspace.id,
+            ownerId: userId,
             name: workspace.name,
             rawJson: JSON.stringify(workspaceRowMap.get(workspace.id) ?? workspace),
             syncedAt,
           })
           .onConflictDoUpdate({
-            target: workspaceCacheTable.id,
+            target: [workspaceCacheTable.id, workspaceCacheTable.ownerId],
             set: {
               name: workspace.name,
               rawJson: JSON.stringify(workspaceRowMap.get(workspace.id) ?? workspace),
@@ -114,18 +128,18 @@ export class SyncService {
       const currentZohoUserName = asString(currentUserMap[currentZohoUserId]);
 
       if (currentZohoUserId) {
-        await this.upsertSyncState("current_zoho_user_id", currentZohoUserId, syncedAt);
+        await this.upsertSyncState(userId, "current_zoho_user_id", currentZohoUserId, syncedAt);
       }
       if (currentZohoUserName) {
-        await this.upsertSyncState("current_zoho_user_name", currentZohoUserName, syncedAt);
+        await this.upsertSyncState(userId, "current_zoho_user_name", currentZohoUserName, syncedAt);
       }
 
       for (const workspace of workspaces) {
         try {
-          await this.syncWorkspaceMetadata(workspace.id, syncedAt, currentZohoUserId || null);
+          await this.syncWorkspaceMetadata(userId, workspace.id, syncedAt, currentZohoUserId || null);
         } catch (error) {
           this.logger.warn(
-            `Workspace metadata sync skipped for ${workspace.id}: ${
+            `Workspace metadata sync skipped for workspace ${workspace.id} user ${userId}: ${
               error instanceof Error ? error.message : "unknown error"
             }`,
           );
@@ -134,25 +148,26 @@ export class SyncService {
 
       this.eventBus.emit({ type: "sync", scope: "metadata", at: syncedAt });
     } catch (error) {
-      this.logger.warn(`Metadata sync skipped: ${error instanceof Error ? error.message : "unknown error"}`);
+      this.logger.warn(`Metadata sync skipped for user ${userId}: ${error instanceof Error ? error.message : "unknown error"}`);
     }
   }
 
   private async syncWorkspaceMetadata(
+    userId: string,
     workspaceId: string,
     syncedAt: string,
     currentZohoUserZuid: string | null,
   ) {
     const [projectsPayload, usersPayload, tagsPayload] = await Promise.all([
-      this.zohoApiClient.request<unknown>({
+      this.zohoApiClient.request<unknown>(userId, {
         path: `/zsapi/team/${workspaceId}/projects/`,
         query: { action: "data", index: 1, range: 250 },
       }),
-      this.zohoApiClient.request<unknown>({
+      this.zohoApiClient.request<unknown>(userId, {
         path: `/zsapi/team/${workspaceId}/users/`,
         query: { action: "data", index: 1, range: 250 },
       }),
-      this.zohoApiClient.request<unknown>({
+      this.zohoApiClient.request<unknown>(userId, {
         path: `/zsapi/team/${workspaceId}/tags/`,
         query: { action: "data", index: 1, range: 250 },
       }),
@@ -166,8 +181,8 @@ export class SyncService {
       ? users.find((user) => user.iamUserId === currentZohoUserZuid)
       : null;
     if (currentInternalUser?.id) {
-      await this.upsertSyncState("current_zoho_internal_user_id", currentInternalUser.id, syncedAt);
-      await this.upsertSyncState("current_zoho_internal_user_name", currentInternalUser.name, syncedAt);
+      await this.upsertSyncState(userId, "current_zoho_internal_user_id", currentInternalUser.id, syncedAt);
+      await this.upsertSyncState(userId, "current_zoho_internal_user_name", currentInternalUser.name, syncedAt);
     }
 
     for (const user of users) {
@@ -175,6 +190,7 @@ export class SyncService {
         .insert(userCacheTable)
         .values({
           id: user.id,
+          ownerId: userId,
           workspaceId,
           name: user.name,
           email: user.email ?? null,
@@ -182,7 +198,7 @@ export class SyncService {
           syncedAt,
         })
         .onConflictDoUpdate({
-          target: userCacheTable.id,
+          target: [userCacheTable.id, userCacheTable.ownerId],
           set: {
             workspaceId,
             name: user.name,
@@ -199,6 +215,7 @@ export class SyncService {
         .insert(tagCacheTable)
         .values({
           id: tag.id,
+          ownerId: userId,
           workspaceId,
           name: tag.name,
           color: tag.color ?? null,
@@ -206,7 +223,7 @@ export class SyncService {
           syncedAt,
         })
         .onConflictDoUpdate({
-          target: tagCacheTable.id,
+          target: [tagCacheTable.id, tagCacheTable.ownerId],
           set: {
             workspaceId,
             name: tag.name,
@@ -223,13 +240,14 @@ export class SyncService {
         .insert(projectCacheTable)
         .values({
           id: project.id,
+          ownerId: userId,
           workspaceId,
           name: project.name,
           rawJson: JSON.stringify(project),
           syncedAt,
         })
         .onConflictDoUpdate({
-          target: projectCacheTable.id,
+          target: [projectCacheTable.id, projectCacheTable.ownerId],
           set: {
             workspaceId,
             name: project.name,
@@ -240,10 +258,10 @@ export class SyncService {
         });
 
       try {
-        await this.syncProjectMetadata(workspaceId, project.id, project.name, syncedAt);
+        await this.syncProjectMetadata(userId, workspaceId, project.id, project.name, syncedAt);
       } catch (error) {
         this.logger.warn(
-          `Project metadata sync skipped for ${project.id}: ${
+          `Project metadata sync skipped for project ${project.id} user ${userId}: ${
             error instanceof Error ? error.message : "unknown error"
           }`,
         );
@@ -252,32 +270,33 @@ export class SyncService {
   }
 
   private async syncProjectMetadata(
+    userId: string,
     workspaceId: string,
     projectId: string,
     projectName: string,
     syncedAt: string,
   ) {
     const [sprintsPayload, backlogPayload, prioritiesPayload, statusesPayload, projectDetailsPayload] = await Promise.all([
-      this.zohoApiClient.request<unknown>({
+      this.zohoApiClient.request<unknown>(userId, {
         path: `/zsapi/team/${workspaceId}/projects/${projectId}/sprints/`,
         query: { action: "data", index: 1, range: 250, type: "[1,2,3,4]" },
       }),
       this.zohoApiClient
-        .request<unknown>({
+        .request<unknown>(userId, {
           path: `/zsapi/team/${workspaceId}/projects/${projectId}/`,
           query: { action: "getbacklog" },
         })
         .catch(() => null),
-      this.zohoApiClient.request<unknown>({
+      this.zohoApiClient.request<unknown>(userId, {
         path: `/zsapi/team/${workspaceId}/projects/${projectId}/priority/`,
         query: { action: "data", index: 1, range: 100 },
       }),
-      this.zohoApiClient.request<unknown>({
+      this.zohoApiClient.request<unknown>(userId, {
         path: `/zsapi/team/${workspaceId}/projects/${projectId}/itemstatus/`,
         query: { action: "data", index: 1, range: 100 },
       }),
       this.zohoApiClient
-        .request<unknown>({
+        .request<unknown>(userId, {
           path: `/zsapi/team/${workspaceId}/projects/${projectId}/`,
           query: { action: "details" },
         })
@@ -303,7 +322,7 @@ export class SyncService {
       const [existingProject] = await this.db.db
         .select()
         .from(projectCacheTable)
-        .where(eq(projectCacheTable.id, projectId))
+        .where(and(eq(projectCacheTable.id, projectId), eq(projectCacheTable.ownerId, userId)))
         .limit(1);
 
       if (existingProject) {
@@ -318,7 +337,7 @@ export class SyncService {
             rawJson: JSON.stringify(rawObj),
             updatedAt: syncedAt,
           })
-          .where(eq(projectCacheTable.id, projectId));
+          .where(and(eq(projectCacheTable.id, projectId), eq(projectCacheTable.ownerId, userId)));
       }
     }
 
@@ -327,6 +346,7 @@ export class SyncService {
         .insert(sprintCacheTable)
         .values({
           id: sprint.id,
+          ownerId: userId,
           projectId,
           workspaceId,
           name: sprint.name,
@@ -335,7 +355,7 @@ export class SyncService {
           syncedAt,
         })
         .onConflictDoUpdate({
-          target: sprintCacheTable.id,
+          target: [sprintCacheTable.id, sprintCacheTable.ownerId],
           set: {
             projectId,
             workspaceId,
@@ -353,6 +373,7 @@ export class SyncService {
         .insert(priorityCacheTable)
         .values({
           id: priority.id,
+          ownerId: userId,
           workspaceId,
           projectId,
           name: priority.name,
@@ -360,7 +381,7 @@ export class SyncService {
           syncedAt,
         })
         .onConflictDoUpdate({
-          target: priorityCacheTable.id,
+          target: [priorityCacheTable.id, priorityCacheTable.ownerId],
           set: {
             workspaceId,
             projectId,
@@ -377,6 +398,7 @@ export class SyncService {
         .insert(statusCacheTable)
         .values({
           id: status.id,
+          ownerId: userId,
           workspaceId,
           projectId,
           name: status.name,
@@ -385,7 +407,7 @@ export class SyncService {
           syncedAt,
         })
         .onConflictDoUpdate({
-          target: statusCacheTable.id,
+          target: [statusCacheTable.id, statusCacheTable.ownerId],
           set: {
             workspaceId,
             projectId,
@@ -399,16 +421,17 @@ export class SyncService {
     }
   }
 
-  private async upsertSyncState(key: string, value: string, syncedAt: string) {
+  private async upsertSyncState(userId: string, key: string, value: string, syncedAt: string) {
     await this.db.db
       .insert(syncStateTable)
       .values({
         key,
+        ownerId: userId,
         value,
         lastSuccessAt: syncedAt,
       })
       .onConflictDoUpdate({
-        target: syncStateTable.key,
+        target: [syncStateTable.key, syncStateTable.ownerId],
         set: {
           value,
           lastSuccessAt: syncedAt,
@@ -419,8 +442,12 @@ export class SyncService {
       });
   }
 
-  async getSyncValue(key: string) {
-    const [row] = await this.db.db.select().from(syncStateTable).where(eq(syncStateTable.key, key)).limit(1);
+  async getSyncValue(userId: string, key: string) {
+    const [row] = await this.db.db
+      .select()
+      .from(syncStateTable)
+      .where(and(eq(syncStateTable.key, key), eq(syncStateTable.ownerId, userId)))
+      .limit(1);
     return row?.value ?? null;
   }
 }

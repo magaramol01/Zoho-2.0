@@ -40,8 +40,8 @@ export class BootstrapController {
       };
     }
 
-    const metadata = await this.metadataService.getMetadata();
-    const savedViews = await this.viewsService.listViews();
+    const metadata = await this.metadataService.getMetadata(session.userId);
+    const savedViews = await this.viewsService.listViews(session.userId);
 
     return {
       authenticated: true,

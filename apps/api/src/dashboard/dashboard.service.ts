@@ -6,8 +6,8 @@ import { TasksService } from "../tasks/tasks.service";
 export class DashboardService {
   constructor(private readonly tasksService: TasksService) {}
 
-  async getSummary(): Promise<DashboardSummary> {
-    const tasks = await this.tasksService.getTasks({});
+  async getSummary(userId: string): Promise<DashboardSummary> {
+    const tasks = await this.tasksService.getTasks(userId, {});
     const today = new Date().toISOString().slice(0, 10);
     const overdue = tasks.filter((task) => task.dueDate && task.dueDate < today);
     const inProgress = tasks.filter((task) => task.statusName.toLowerCase().includes("progress"));

@@ -4,6 +4,7 @@ import {
   sqliteTable,
   text,
   uniqueIndex,
+  primaryKey,
 } from "drizzle-orm/sqlite-core";
 
 const timestamps = {
@@ -47,25 +48,32 @@ export const sessionsTable = sqliteTable("sessions", {
 }));
 
 export const workspaceCacheTable = sqliteTable("workspace_cache", {
-  id: text("id").primaryKey(),
+  id: text("id").notNull(),
+  ownerId: text("owner_id").notNull(),
   name: text("name").notNull(),
   rawJson: text("raw_json"),
   syncedAt: text("synced_at").notNull(),
   ...timestamps,
-});
+}, (table) => ({
+  pk: primaryKey({ columns: [table.id, table.ownerId] }),
+}));
 
 export const projectCacheTable = sqliteTable("project_cache", {
-  id: text("id").primaryKey(),
+  id: text("id").notNull(),
+  ownerId: text("owner_id").notNull(),
   workspaceId: text("workspace_id").notNull(),
   name: text("name").notNull(),
   status: text("status"),
   rawJson: text("raw_json"),
   syncedAt: text("synced_at").notNull(),
   ...timestamps,
-});
+}, (table) => ({
+  pk: primaryKey({ columns: [table.id, table.ownerId] }),
+}));
 
 export const sprintCacheTable = sqliteTable("sprint_cache", {
-  id: text("id").primaryKey(),
+  id: text("id").notNull(),
+  ownerId: text("owner_id").notNull(),
   projectId: text("project_id").notNull(),
   workspaceId: text("workspace_id").notNull(),
   name: text("name").notNull(),
@@ -73,10 +81,13 @@ export const sprintCacheTable = sqliteTable("sprint_cache", {
   rawJson: text("raw_json"),
   syncedAt: text("synced_at").notNull(),
   ...timestamps,
-});
+}, (table) => ({
+  pk: primaryKey({ columns: [table.id, table.ownerId] }),
+}));
 
 export const statusCacheTable = sqliteTable("status_cache", {
-  id: text("id").primaryKey(),
+  id: text("id").notNull(),
+  ownerId: text("owner_id").notNull(),
   workspaceId: text("workspace_id").notNull(),
   projectId: text("project_id"),
   name: text("name").notNull(),
@@ -84,40 +95,52 @@ export const statusCacheTable = sqliteTable("status_cache", {
   rawJson: text("raw_json"),
   syncedAt: text("synced_at").notNull(),
   ...timestamps,
-});
+}, (table) => ({
+  pk: primaryKey({ columns: [table.id, table.ownerId] }),
+}));
 
 export const priorityCacheTable = sqliteTable("priority_cache", {
-  id: text("id").primaryKey(),
+  id: text("id").notNull(),
+  ownerId: text("owner_id").notNull(),
   workspaceId: text("workspace_id").notNull(),
   projectId: text("project_id"),
   name: text("name").notNull(),
   rawJson: text("raw_json"),
   syncedAt: text("synced_at").notNull(),
   ...timestamps,
-});
+}, (table) => ({
+  pk: primaryKey({ columns: [table.id, table.ownerId] }),
+}));
 
 export const userCacheTable = sqliteTable("user_cache", {
-  id: text("id").primaryKey(),
+  id: text("id").notNull(),
+  ownerId: text("owner_id").notNull(),
   workspaceId: text("workspace_id").notNull(),
   name: text("name").notNull(),
   email: text("email"),
   rawJson: text("raw_json"),
   syncedAt: text("synced_at").notNull(),
   ...timestamps,
-});
+}, (table) => ({
+  pk: primaryKey({ columns: [table.id, table.ownerId] }),
+}));
 
 export const tagCacheTable = sqliteTable("tag_cache", {
-  id: text("id").primaryKey(),
+  id: text("id").notNull(),
+  ownerId: text("owner_id").notNull(),
   workspaceId: text("workspace_id").notNull(),
   name: text("name").notNull(),
   color: text("color"),
   rawJson: text("raw_json"),
   syncedAt: text("synced_at").notNull(),
   ...timestamps,
-});
+}, (table) => ({
+  pk: primaryKey({ columns: [table.id, table.ownerId] }),
+}));
 
 export const taskCacheTable = sqliteTable("task_cache", {
-  id: text("id").primaryKey(),
+  id: text("id").notNull(),
+  ownerId: text("owner_id").notNull(),
   itemNo: text("item_no").notNull(),
   description: text("description"),
   workspaceId: text("workspace_id").notNull(),
@@ -141,10 +164,13 @@ export const taskCacheTable = sqliteTable("task_cache", {
   rawJson: text("raw_json"),
   syncedAt: text("synced_at").notNull(),
   ...timestamps,
-});
+}, (table) => ({
+  pk: primaryKey({ columns: [table.id, table.ownerId] }),
+}));
 
 export const timesheetLogCacheTable = sqliteTable("timesheet_log_cache", {
-  id: text("id").primaryKey(),
+  id: text("id").notNull(),
+  ownerId: text("owner_id").notNull(),
   taskId: text("task_id"),
   projectId: text("project_id").notNull(),
   projectName: text("project_name").notNull(),
@@ -159,7 +185,9 @@ export const timesheetLogCacheTable = sqliteTable("timesheet_log_cache", {
   rawJson: text("raw_json"),
   syncedAt: text("synced_at").notNull(),
   ...timestamps,
-});
+}, (table) => ({
+  pk: primaryKey({ columns: [table.id, table.ownerId] }),
+}));
 
 export const savedViewsTable = sqliteTable("saved_views", {
   id: text("id").primaryKey(),
@@ -184,16 +212,20 @@ export const userPreferencesTable = sqliteTable("user_preferences", {
 }));
 
 export const syncStateTable = sqliteTable("sync_state", {
-  key: text("key").primaryKey(),
+  key: text("key").notNull(),
+  ownerId: text("owner_id").notNull(),
   value: text("value").notNull(),
   lastSuccessAt: text("last_success_at"),
   lastErrorAt: text("last_error_at"),
   lastErrorMessage: text("last_error_message"),
   ...timestamps,
-});
+}, (table) => ({
+  pk: primaryKey({ columns: [table.key, table.ownerId] }),
+}));
 
 export const mutationAuditTable = sqliteTable("mutation_audit", {
-  id: text("id").primaryKey(),
+  id: text("id").notNull(),
+  ownerId: text("owner_id").notNull(),
   entityType: text("entity_type").notNull(),
   entityId: text("entity_id").notNull(),
   action: text("action").notNull(),
@@ -202,7 +234,9 @@ export const mutationAuditTable = sqliteTable("mutation_audit", {
   responseJson: text("response_json"),
   errorMessage: text("error_message"),
   ...timestamps,
-});
+}, (table) => ({
+  pk: primaryKey({ columns: [table.id, table.ownerId] }),
+}));
 
 export const migrationsTable = sqliteTable("migrations", {
   id: text("id").primaryKey(),
